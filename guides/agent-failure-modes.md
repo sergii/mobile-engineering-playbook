@@ -344,6 +344,59 @@ Reference: https://docs.expo.dev/guides/keyboard-handling/
 
 ---
 
+## 20. Client-route authorization illusion
+
+### Failure
+
+The agent protects or hides a route and assumes the corresponding backend data or mutation is therefore authorized.
+
+### Rule
+
+Protected Routes are client-side navigation and UX controls, not a server security boundary.
+
+Every protected backend/API operation must independently authenticate the caller and enforce authorization on the server.
+
+Reference: https://docs.expo.dev/router/advanced/protected/
+
+---
+
+## 21. Error Boundary as universal catch
+
+### Failure
+
+The agent assumes a React/Expo Router Error Boundary catches ordinary event-handler failures, network errors, promise rejections, or arbitrary asynchronous callbacks.
+
+### Rule
+
+Use Error Boundaries for unexpected React render/component-tree failures and recovery scopes.
+
+Handle event-handler, async-operation, and network/mutation errors explicitly at the operation boundary and map expected failures into product UI state.
+
+Reference: https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
+
+---
+
+## 22. OTA/native-runtime mismatch
+
+### Failure
+
+The agent publishes an OTA JavaScript update that depends on native code or configuration unavailable in one or more installed binaries targeted by the update.
+
+### Rule
+
+When the product uses OTA updates, treat `runtimeVersion` as the compatibility contract between the update and native binary.
+
+Native-runtime changes require a compatible new binary/runtimeVersion before shipping JavaScript that depends on them. Verify production updates on a staging/preview build with the intended runtime and know the rollback path.
+
+Follow current Expo guidance for runtimeVersion policy. Do not assume the experimental `fingerprint` policy is the universal default.
+
+References:
+
+- https://docs.expo.dev/eas-update/deployment/
+- https://docs.expo.dev/eas-update/runtime-versions/
+
+---
+
 # Recovery sequence
 
 When an agent-generated implementation feels overbuilt, web-shaped, or platform-fragile, recover in this order:
