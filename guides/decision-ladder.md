@@ -1,6 +1,6 @@
 # Decision Ladder
 
-This guide defines when to introduce common React Native / Expo tools and abstractions.
+This guide defines when to introduce common React Native / Expo tools.
 
 The default rule is simple:
 
@@ -11,34 +11,11 @@ Add it when the application has a concrete problem that the tool solves better t
 
 Use this document together with `MOBILE_ENGINEERING_PLAYBOOK.md`.
 
-A package being present in the dependency tree does not mean the project has adopted that package's API. Apply this ladder before using a transitive dependency directly in application code.
+Archetypes may indicate that a class of product is more likely to need a tool earlier, but they do not override this ladder.
 
 ---
 
-# 1. Runtime: Expo Go vs development build
-
-## Default
-
-Expo Go is acceptable for early experiments that fit entirely inside its bundled native capabilities.
-
-## Move to a development build when
-
-- a native library is not bundled in Expo Go;
-- config plugins matter;
-- app-specific permissions or entitlements matter;
-- custom native modules are introduced;
-- native SDKs are integrated;
-- production-like native behavior must be verified.
-
-Once the application depends on a development build, verify native features there rather than treating Expo Go as the source of truth.
-
-Development builds may be local or EAS-built. EAS is not mandatory.
-
-Reference: https://docs.expo.dev/develop/development-builds/introduction/
-
----
-
-# 2. Styling
+# 1. Styling
 
 ## Default
 
@@ -52,10 +29,9 @@ local component styles
 
 ## Stay with StyleSheet when
 
-- the application has one primary theme;
-- layouts are mostly phone-oriented;
+- the application has manageable theme needs;
 - token access through imports is understandable;
-- platform differences are small;
+- platform differences are limited;
 - styles remain local to components;
 - there is no meaningful runtime theme complexity.
 
@@ -64,7 +40,7 @@ local component styles
 A concrete problem appears, such as:
 
 - many runtime themes;
-- substantial tablet/phone responsive rules;
+- substantial phone/tablet responsive rules;
 - complicated dynamic theme propagation;
 - large-scale semantic token switching;
 - repeated media-query-like behavior;
@@ -72,11 +48,11 @@ A concrete problem appears, such as:
 
 At that point compare focused current options against the actual requirement.
 
-Do not migrate merely because another syntax is fashionable or shorter.
+Do not migrate merely because a styling framework has cleaner syntax.
 
 ---
 
-# 3. Expo Router
+# 2. Expo Router
 
 ## Default
 
@@ -86,9 +62,9 @@ Use Expo Router for real application navigation.
 
 - there is one screen;
 - navigation is temporary;
-- the purpose is to validate one isolated control or experiment.
+- the purpose is to validate one isolated interaction or experiment.
 
-## Introduce Expo Router once
+## Use Expo Router once
 
 - multiple routes exist;
 - tabs or stacks become product behavior;
@@ -101,7 +77,7 @@ Do not build a long-lived custom router from React state.
 
 ---
 
-# 4. React Native Gesture Handler
+# 3. React Native Gesture Handler
 
 ## Default
 
@@ -111,7 +87,7 @@ Start with built-in interaction primitives:
 Pressable
 ScrollView
 FlatList
-PanResponder when truly simple
+PanResponder when genuinely simple
 ```
 
 ## Add Gesture Handler when
@@ -122,11 +98,13 @@ PanResponder when truly simple
 - gesture cancellation and simultaneous recognition matter;
 - custom interactions need production-grade gesture semantics.
 
-Do not add or start using it merely because another dependency brought it into the tree.
+Do not add it just because the application has buttons or simple taps.
+
+A transitive installation does not mean application code has adopted the API.
 
 ---
 
-# 5. Reanimated
+# 4. Reanimated
 
 ## Default
 
@@ -134,24 +112,24 @@ Use simple built-in state changes and platform transitions where sufficient.
 
 ## Add Reanimated when
 
-- animation is continuously linked to a gesture;
+- animation is linked continuously to a gesture;
 - high-frequency animation must remain smooth under JS load;
 - shared values simplify complex interaction state;
 - advanced transitions or coordinated motion are part of the product;
-- UI-thread execution provides a real benefit.
+- animation work clearly benefits from UI-thread execution.
 
 ## Do not add Reanimated for
 
 - a basic pressed opacity;
 - trivial show/hide behavior;
-- static state changes;
+- simple static state changes;
 - animation the platform already handles well.
 
 Motion must communicate something meaningful.
 
 ---
 
-# 6. `@expo/ui`
+# 5. `@expo/ui`
 
 ## Default
 
@@ -161,20 +139,20 @@ Use React Native controls and primitives first.
 
 - native SwiftUI/Compose behavior creates a real product advantage;
 - a platform control is difficult to reproduce correctly;
-- platform-native menus, pickers, sheets, or settings interactions are important;
+- native menus, pickers, sheets, or settings interactions are important;
 - using the native control improves accessibility or platform fidelity.
 
 ## Do not use it as
 
 - a mandatory universal component library;
-- a reason to make platforms diverge unnecessarily;
-- a replacement for domain-specific React Native components.
+- a reason to make platform behavior diverge unnecessarily;
+- a replacement for product-specific React Native components.
 
 Use selectively.
 
 ---
 
-# 7. External State Management
+# 6. External State Management
 
 ## Default
 
@@ -186,7 +164,7 @@ useReducer
 Context
 ```
 
-## Consider an external state library when
+## Consider Zustand, Redux, Jotai, or another library when
 
 - many distant components mutate the same persistent application state;
 - state ownership is no longer clear;
@@ -194,17 +172,22 @@ Context
 - state transitions deserve explicit centralized modeling;
 - debugging shared application state has become difficult.
 
-Do not add external state merely because the app has many screens.
+## Do not add external state because
+
+- the app has many screens;
+- a tutorial includes it;
+- the API returns data;
+- it might be needed later.
 
 ---
 
-# 8. Server-State Library
+# 7. TanStack Query or another server-state library
 
 ## Default
 
 Use straightforward service calls for simple request/response workflows.
 
-## Add TanStack Query or another server-state library when the product needs several of
+## Add a server-state library when the product needs several of
 
 - caching;
 - stale-time policies;
@@ -216,29 +199,33 @@ Use straightforward service calls for simple request/response workflows.
 - invalidation after mutation;
 - multiple consumers of the same remote data.
 
-Do not add it merely because the app has an API.
+## Do not add it merely because
+
+- the app has a REST or GraphQL API;
+- one screen fetches data;
+- it is considered standard infrastructure.
 
 ---
 
-# 9. Forms and Validation
+# 8. Forms and Validation
 
 ## Default
 
-Use native inputs, local state, and focused validation for small forms.
+Use native inputs and local state for small forms.
 
 ## Add a form/validation library when
 
-- many fields require coordinated state;
-- nested/repeating fields exist;
-- validation schemas are reused;
-- form performance or orchestration is becoming difficult;
-- server/client validation mapping creates repeated complexity.
+- many fields share repeated validation behavior;
+- nested or dynamic fields become difficult to manage;
+- reusable schemas are valuable;
+- error mapping and submission orchestration create repeated complexity;
+- measured form performance becomes a problem.
 
-Do not choose a form stack globally just because some screens contain forms.
+Do not add a form framework simply because a product contains forms.
 
 ---
 
-# 10. Storybook
+# 9. Storybook
 
 ## Default
 
@@ -249,32 +236,44 @@ Do not require Storybook for the first vertical slice.
 - shared components have multiple important states;
 - components are used on several screens;
 - visual iteration inside full flows is slow;
-- agents repeatedly modify common components;
+- agents repeatedly modify common UI primitives;
 - a real design system is emerging;
 - isolated component review becomes useful.
 
-Good stories represent product states, not decorative permutations.
+Good stories represent meaningful states such as:
+
+```text
+default
+loading
+success
+warning
+error
+disabled
+empty
+```
+
+Do not build stories for every trivial wrapper.
 
 ---
 
-# 11. Component Tests
+# 10. React Native Testing Library
 
 ## Default
 
-Do not test every wrapper.
+Do not require component tests for every component.
 
-## Add React Native Testing Library or an equivalent project-adopted tool when
+## Add component tests when
 
-- component interaction has meaningful branching;
-- accessibility behavior should be protected;
-- loading/error/selection states are valuable to verify without full E2E execution;
-- regression risk exists below the full-flow level.
+- interaction behavior is meaningful to protect;
+- state transitions can be verified without a device flow;
+- accessibility behavior matters;
+- a shared component is becoming regression-prone.
 
-Prefer user-observable assertions over implementation details.
+Prefer user-observable behavior over internal implementation details.
 
 ---
 
-# 12. Maestro
+# 11. Maestro
 
 ## Default
 
@@ -287,15 +286,15 @@ Manual verification is acceptable for the earliest prototype.
 - the same flow must work repeatedly across changes;
 - CI should verify core application behavior.
 
-Prioritize critical paths rather than every screen.
+Prioritize a small number of high-value journeys.
 
 Maestro is for deterministic user journeys, not subjective visual quality.
 
-Reference: https://docs.maestro.dev/
+Reference: https://maestro.mobile.dev/
 
 ---
 
-# 13. agent-device
+# 12. agent-device
 
 ## Default
 
@@ -305,11 +304,11 @@ Use after a runnable UI exists.
 
 - exploratory interaction;
 - visual verification;
-- accessibility-tree inspection;
-- agent-driven navigation;
-- screenshots and evidence;
-- checking whether generated UI behaves as intended;
-- finding unexpected states outside deterministic scripts.
+- checking accessibility-tree output;
+- agent-driven navigation through a flow;
+- screenshots;
+- checking whether generated UI actually behaves as intended;
+- finding unexpected states deterministic scripts do not cover.
 
 ## Do not use agent-device as
 
@@ -328,7 +327,7 @@ Reference: https://github.com/callstack/agent-device
 
 ---
 
-# 14. Argent or deeper device tooling
+# 13. Argent or deeper device tooling
 
 ## Default
 
@@ -340,17 +339,16 @@ Start with normal simulator/device debugging and agent-device.
 - network introspection is important;
 - Hermes profiling is needed;
 - CPU/render performance requires investigation;
-- native platform profiling becomes relevant;
-- visual regression/replay materially helps debugging;
-- black-box interaction is insufficient.
+- Xcode Instruments or Android Perfetto workflows become relevant;
+- black-box interaction is insufficient to diagnose a problem.
 
-Use richer tooling in response to a debugging need, not as mandatory infrastructure.
+Use richer tools in response to a debugging need, not as mandatory project infrastructure.
 
 Reference: https://github.com/software-mansion/argent
 
 ---
 
-# 15. React Native Skia
+# 14. React Native Skia
 
 ## Default
 
@@ -368,11 +366,11 @@ Do not use Skia to draw ordinary buttons, cards, or static icons.
 
 ---
 
-# 16. SVG
+# 15. SVG
 
 ## Default
 
-Use normal views/text/images where appropriate.
+Use normal views, text, and images where appropriate.
 
 ## Add `react-native-svg` when
 
@@ -384,40 +382,40 @@ SVG is often the right middle ground before Skia.
 
 ---
 
-# 17. Images
+# 16. Images
 
 ## Default
 
-Use the simplest image primitive that satisfies the feature.
+Use React Native image primitives for simple local or straightforward image needs.
 
 ## Consider `expo-image` when
 
-- remote-image caching matters;
-- placeholders or transitions matter;
-- loading large/remote image sets is user-visible;
-- richer image behavior clearly improves the product.
+- remote image caching matters;
+- placeholders or transitions improve UX;
+- image loading/performance becomes meaningful;
+- the product is image-heavy.
 
-Do not add image infrastructure for a few static local assets.
+Do not adopt a richer image pipeline without a product reason.
 
 ---
 
-# 18. Large Lists
+# 17. Large Lists
 
 ## Default
 
-Start with React Native list primitives.
+Start with `FlatList` / `SectionList`.
 
-## Evaluate alternatives when
+## Consider a specialized list implementation when
 
-- profiling shows list rendering is a user-visible bottleneck;
-- data volume and cell complexity exceed the current approach;
-- memory or frame performance is measurably poor.
+- measurement shows render/frame problems;
+- cells are unusually expensive;
+- the list is central to the product and current primitives cannot meet performance requirements.
 
-Measure first. Do not migrate because a list is expected to become large someday.
+Do not replace lists based only on a guessed item-count threshold.
 
 ---
 
-# 19. Custom Native Modules
+# 18. Custom Native Modules
 
 ## Default
 
@@ -427,17 +425,17 @@ Stay inside Expo and mature React Native libraries.
 
 - the required platform capability is unavailable;
 - performance or latency requirements cannot be met otherwise;
-- hardware/device integration requires native APIs;
+- a hardware/device integration requires native APIs;
 - a vendor SDK must be integrated;
 - a focused native implementation is clearly smaller than a workaround.
 
-Prefer Expo Modules API for application-specific native modules unless another approach has a documented advantage.
+Before committing to native code, document why Expo and existing packages are insufficient, supported platforms, build implications, testing strategy, and long-term ownership cost.
 
-Reference: https://docs.expo.dev/modules/overview/
+Prefer Expo Modules API for application-specific native modules when appropriate.
 
 ---
 
-# 20. UI Component Libraries
+# 19. UI Component Libraries
 
 Examples include HeroUI Native, Gluestack, Tamagui, and similar systems.
 
@@ -447,23 +445,24 @@ Do not use one automatically.
 
 ## Consider a UI library when
 
-- the application is primarily conventional forms/settings/CRUD UI;
+- much of the application is conventional forms/settings/content UI;
 - delivery speed matters more than a strongly custom interaction language;
 - its accessibility and platform behavior are good enough;
 - the design intentionally aligns with the library;
-- the team accepts dependency and migration cost.
+- the team accepts the dependency and migration cost.
 
 ## Avoid when
 
-- the product is dominated by domain-specific operational interactions;
+- the product is dominated by custom domain interactions;
 - the library would dictate the visual language;
-- many components immediately require heavy overrides.
+- many components would immediately need heavy overrides;
+- the application would become a wrapper around library conventions.
 
 A UI library should accelerate the product, not reshape it.
 
 ---
 
-# 21. Figma MCP
+# 20. Figma MCP
 
 ## Default
 
@@ -473,28 +472,39 @@ Not required to begin implementation.
 
 - a maintained Figma design exists;
 - structured variables/components improve implementation accuracy;
-- design-system context should flow into agent sessions;
+- design-system context needs to flow into agent sessions;
 - comparing design intent with implementation is valuable.
 
-Do not treat Figma MCP as a compiler.
-
-Always inspect the running application.
+Do not treat Figma MCP as a compiler. Always inspect the running application.
 
 ---
 
-# 22. Analytics and Observability
+# 21. Analytics and Observability
 
 ## Default
 
 Do not install a full analytics or observability stack before there is production behavior to observe.
 
-Add crash reporting, product analytics, or performance tracing when each answers a concrete operational or product question.
+## Add crash reporting when
+
+- external users rely on the app;
+- crashes must be diagnosable outside development.
+
+## Add product analytics when
+
+- there are explicit product questions to answer;
+- events can influence decisions.
+
+## Add performance tracing when
+
+- performance is a user-visible concern;
+- measurement is needed to locate bottlenecks.
 
 Do not collect telemetry without a purpose.
 
 ---
 
-# 23. Offline Persistence
+# 22. Offline Persistence
 
 ## Default
 
@@ -509,31 +519,48 @@ Online-only behavior is acceptable unless the product requires offline use.
 - retry behavior;
 - user-visible sync state.
 
-A network error screen is not an offline architecture.
+Do not install a database merely because mobile applications sometimes work offline.
 
 ---
 
-# 24. EAS Build / Update / Submit / Workflows
+# 23. Expo Go vs Development Build
 
 ## Default
 
-Do not make cloud delivery infrastructure part of the first walking skeleton unless the project needs it immediately.
+Expo Go is acceptable for very early experiments that fit its bundled native capabilities.
 
-## Introduce EAS delivery tooling when
+## Move to a development build when
 
-- repeatable signed builds are needed;
-- testers need internal distributions;
-- store submission should be automated;
-- OTA update policy is defined and appropriate;
-- CI needs Expo-integrated mobile jobs.
+- a native library outside Expo Go is required;
+- config plugins matter;
+- app-specific native permissions or entitlements matter;
+- custom native modules or vendor SDKs are introduced;
+- production-like native behavior must be verified.
 
-Local native builds remain valid. EAS is a strong Expo-integrated option, not an architectural requirement.
+Once native behavior depends on the development build, do not use Expo Go as proof that the feature works.
+
+---
+
+# 24. EAS Build / Update / Submit
+
+## Default
+
+Do not make EAS an application-architecture requirement.
+
+## Use EAS when
+
+- its cloud build flow reduces operational work;
+- OTA update policy is appropriate for the product;
+- store submission automation is valuable;
+- Expo-integrated release tooling simplifies CI/CD.
+
+Local native builds and other CI systems remain valid choices.
 
 ---
 
 # 25. Decision Template
 
-For any significant new dependency or framework, write a short note:
+For any significant new dependency or framework, write a short note using this structure:
 
 ```markdown
 ## Decision: <tool or approach>

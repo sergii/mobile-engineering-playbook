@@ -1,8 +1,8 @@
 # Mobile Engineering Playbook
 
-A reusable engineering playbook for building modern mobile applications with React Native, Expo, TypeScript, and AI coding agents.
+A reusable engineering baseline for building modern mobile applications with React Native, Expo, TypeScript, and AI coding agents.
 
-The playbook is intentionally **principle-first and UI-library-neutral**. It favors React Native and Expo primitives, vertical slices, simulator/device verification, and adding complexity only when a concrete product problem justifies it.
+The playbook is intentionally **principle-first and UI-library-neutral**. It favors platform primitives, vertical slices, real simulator/device verification, and adding complexity only when a concrete product problem justifies it.
 
 > Product architecture before framework architecture.
 
@@ -22,52 +22,76 @@ make it pleasant
 make it sophisticated only where needed
 ```
 
+## Three context layers
+
+This repository separates universal engineering guidance from product-shaped examples:
+
+```text
+LEVEL 1  Mobile Engineering Playbook
+         universal defaults and decision rules
+                     ↓
+LEVEL 2  Application Archetype
+         optional context for a class of products
+                     ↓
+LEVEL 3  Product Rules
+         the actual application's domain and constraints
+```
+
+An archetype is **not a template to copy**. It describes common forces, likely states, architectural biases, and useful vertical slices for a class of applications.
+
+Project-specific documented requirements always override an archetype, and archetypes never override the core engineering safety rules.
+
 ## Documents
 
 - [`MOBILE_ENGINEERING_PLAYBOOK.md`](./MOBILE_ENGINEERING_PLAYBOOK.md) - canonical engineering principles and defaults.
 - [`AGENTS.md`](./AGENTS.md) - compact operating contract for coding agents.
-- [`guides/decision-ladder.md`](./guides/decision-ladder.md) - when to introduce tools and abstractions.
-- [`guides/agent-failure-modes.md`](./guides/agent-failure-modes.md) - common AI-agent mistakes in React Native projects.
-- [`guides/vertical-slice-checklist.md`](./guides/vertical-slice-checklist.md) - practical completion checklist for a feature slice.
+- [`guides/decision-ladder.md`](./guides/decision-ladder.md) - when to introduce common tools and abstractions.
+- [`guides/agent-failure-modes.md`](./guides/agent-failure-modes.md) - common AI coding mistakes in React Native / Expo projects.
+- [`guides/vertical-slice-checklist.md`](./guides/vertical-slice-checklist.md) - compact Definition of Done for a vertical slice.
+- [`archetypes/`](./archetypes/) - optional product-class context and examples.
+
+## Archetypes
+
+Current archetypes:
+
+- [`camera-operational`](./archetypes/camera-operational/) - camera-first operational workflows such as inventory, field service, logistics, asset handling, or similar physical-world tasks.
+
+More archetypes can be added later, for example e-commerce, marketplace, messaging, content consumption, field service, fintech, or real-time tracking.
+
+Do not add an archetype merely to create a taxonomy. Add one when repeated product forces justify reusable guidance.
 
 ## How to use it
 
-For a new or existing product repository:
+For a new product repository:
 
-1. Put a project-specific `AGENTS.md` in the product repository.
-2. Reference this playbook as the shared baseline.
-3. Add product-specific domain rules, terminology, workflows, and constraints locally.
-4. Let project-specific documented rules override this generic baseline.
-5. Do not vendor the entire playbook into every repository unless local/offline ownership is required.
+1. Put a small `AGENTS.md` in the product repository.
+2. Reference this playbook as the shared engineering baseline.
+3. Explicitly reference an archetype only when it is useful for that product.
+4. Add product-specific domain rules, terminology, workflows, and constraints locally.
+5. Let project-specific rules override generic examples.
+6. Do not vendor the whole playbook into every project unless there is a concrete offline or governance reason.
 
-For other agent ecosystems, adapt the compact operating rules from `AGENTS.md` into the native instruction mechanism used by that tool, such as `CLAUDE.md`, `.cursor/rules`, or repository-level Copilot instructions. Keep one canonical source and avoid maintaining divergent copies by hand.
+For other agent environments, map the same operating rules into the local mechanism, such as `CLAUDE.md`, Cursor rules, or repository-level agent instructions.
 
-The examples intentionally use domain-rich operational scenarios because they expose architectural trade-offs clearly. The same principles apply to CRUD apps, marketplaces, communication products, consumer apps, fintech, media, and other mobile products.
+## Example policy
+
+Core documents use cross-domain or abstract examples on purpose. Domain-heavy examples belong in `archetypes/`.
+
+Examples are illustrative, not normative. A scanner, checkout, inbox, map, or media flow demonstrates a principle but does not define the default architecture for every mobile application.
 
 ## Philosophy
 
 - Expo-first.
-- Current React Native New Architecture baseline.
 - React Native primitives first.
 - `StyleSheet` first.
-- Domain components over speculative generic abstractions.
+- Domain concepts over framework-shaped abstractions.
 - Vertical slices over horizontal infrastructure projects.
 - Working behavior before visual sophistication.
-- Development builds once native runtime configuration matters.
 - Deterministic tests for known behavior.
 - Device inspection for exploratory and visual verification.
 - Dependencies must solve an existing, identifiable problem.
+- Archetypes guide context; they do not dictate architecture.
 - Complexity must be earned.
-
-## Key references
-
-- Expo documentation: https://docs.expo.dev/
-- React Native New Architecture in Expo: https://docs.expo.dev/guides/new-architecture/
-- Expo development builds: https://docs.expo.dev/develop/development-builds/introduction/
-- Expo Modules API: https://docs.expo.dev/modules/overview/
-- Maestro: https://docs.maestro.dev/
-- agent-device: https://github.com/callstack/agent-device
-- Argent: https://github.com/software-mansion/argent
 
 ## License
 

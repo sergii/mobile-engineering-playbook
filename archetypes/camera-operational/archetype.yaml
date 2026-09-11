@@ -1,0 +1,150 @@
+id: camera-operational
+name: Camera-Operational
+status: experimental
+version: 0.1
+
+summary: >-
+  Mobile products where the camera is a primary operational input and the user
+  acts on physical-world objects, locations, or evidence.
+
+example_domains:
+  - inventory
+  - logistics
+  - field_service
+  - asset_management
+  - inspection
+  - maintenance
+  - receiving
+  - picking
+
+not_a_template: true
+explicit_selection_required: true
+
+interaction_model:
+  primary_input:
+    - camera
+    - barcode
+    - qr
+    - ocr
+    - image_capture
+    - visual_recognition
+  typical_loop:
+    - observe
+    - detect_or_capture
+    - resolve_identity
+    - expose_confidence
+    - confirm_or_correct
+    - mutate_domain_state
+    - provide_feedback
+
+state_families:
+  - idle
+  - requesting_permission
+  - ready
+  - scanning
+  - capturing
+  - recognizing
+  - recognized
+  - uncertain
+  - not_found
+  - confirming
+  - confirmed
+  - failed
+  - recovering
+
+typical_components:
+  - ScannerViewfinder
+  - CaptureControl
+  - RecognitionResult
+  - ConfidenceIndicator
+  - ObjectIdentity
+  - LocationIdentity
+  - ConfirmationAction
+  - CorrectionAction
+  - OperationResult
+
+architecture_bias:
+  native_runtime_configuration: high
+  permissions: high
+  one_handed_use: high
+  haptics: medium_high
+  custom_gestures: medium
+  continuous_animation: medium
+  server_state: medium
+  offline_probability: medium_high
+  local_persistence: medium
+  realtime_updates: low_medium
+  form_complexity: low_medium
+  media_processing: medium_high
+  device_verification: high
+  performance_sensitivity: medium_high
+
+platform_defaults:
+  runtime:
+    start: expo_go_if_sufficient
+    move_to: development_build
+    when:
+      - camera_native_configuration_matters
+      - config_plugins_are_required
+      - native_libraries_exceed_expo_go
+      - production_like_native_behavior_must_be_verified
+
+  camera:
+    preferred_first_option: expo-camera
+    verify_current_docs: true
+
+  haptics:
+    preferred_first_option: expo-haptics
+    use_for:
+      - meaningful_selection
+      - successful_operation
+      - important_warning
+
+conditional_tools:
+  - tool: react-native-gesture-handler
+    consider_when:
+      - gesture_coordination_becomes_non_trivial
+      - camera_surface_supports_swipe_pan_pinch_or_custom_gestures
+
+  - tool: react-native-reanimated
+    consider_when:
+      - visual_feedback_is_continuous
+      - animation_is_gesture_linked
+      - ui_thread_execution_is_materially_useful
+
+  - tool: react-native-svg
+    consider_when:
+      - viewfinder_or_vector_overlay_is_simple_and_static_or_lightweight
+
+  - tool: react-native-skia
+    consider_when:
+      - overlay_or_visualization_is_graphics_heavy
+      - measured_rendering_requirements_exceed_normal_views_or_svg
+
+  - tool: local_persistence
+    consider_when:
+      - operations_must_survive_connectivity_loss
+      - queued_mutations_are_part_of_product_behavior
+
+verification_bias:
+  manual_device_or_simulator: required_for_meaningful_ui
+  agent_device: high_value
+  maestro: use_for_critical_deterministic_flows
+  physical_device: strongly_preferred_when_camera_behavior_is_material
+
+product_questions:
+  - What exactly is being identified or captured?
+  - What is the cost of a false positive?
+  - What is the cost of asking for unnecessary confirmation?
+  - How is uncertainty shown and corrected?
+  - Must the workflow work offline?
+  - Is the user likely to operate one-handed?
+  - What environmental constraints affect camera reliability?
+  - What feedback confirms that the physical-world action succeeded?
+
+non_goals:
+  - prescribe_a_warehouse_domain_model
+  - mandate_ai_recognition
+  - mandate_offline_architecture
+  - mandate_reanimated_or_gesture_handler
+  - replace_product_specific_rules
