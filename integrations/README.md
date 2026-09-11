@@ -2,20 +2,11 @@
 
 These files are thin adapters for popular coding-agent environments.
 
-They are intentionally small. The canonical rules remain in:
+They are intentionally small. The canonical guidance remains in the shared playbook and its focused guides.
 
-- `MOBILE_ENGINEERING_PLAYBOOK.md`
-- `guides/decision-ladder.md`
-- `guides/agent-failure-modes.md`
-- `guides/platform-native-rules.md`
-- any explicitly selected archetype
-- the product repository's own documentation
-
-Do not copy the full playbook into every agent-specific file. That creates drift.
+Do not copy the full playbook into every agent-specific file. That creates drift and wastes context.
 
 ## Precedence
-
-Use this mental model:
 
 ```text
 shared playbook
@@ -29,6 +20,21 @@ current task
 
 Product-specific rules override generic examples.
 
+## Context loading
+
+Adapters should always load the product's local instructions and task-relevant domain context.
+
+Shared documents are loaded conditionally:
+
+- architecture/startup/unfamiliar mobile decision → core playbook;
+- dependency choice → decision ladder;
+- suspicious generated code → failure modes;
+- native/auth/storage/layout/keyboard concern → platform-native rules;
+- feature completion → vertical-slice checklist;
+- archetype → only when explicitly selected and relevant.
+
+Context budget is a resource. Do not load every guide for every task.
+
 ## Available adapters
 
 - `codex/AGENTS.md`
@@ -36,6 +42,12 @@ Product-specific rules override generic examples.
 - `cursor/mobile.mdc`
 - `github-copilot/copilot-instructions.md`
 
-Copy the relevant adapter into the conventional path used by the target tool, then customize the product-specific section locally.
+Copy the relevant adapter into the conventional path used by the target tool, then customize product-specific guidance locally.
 
-The adapters should point to the playbook rather than duplicate it.
+## Generic product template
+
+For a new repository that needs a minimal local contract, start from:
+
+- [`../templates/product/AGENTS.md`](../templates/product/AGENTS.md)
+
+It demonstrates how to reference the shared playbook, optionally select an archetype, and keep product-owned rules local without copying the full standard.
