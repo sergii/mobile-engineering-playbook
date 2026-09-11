@@ -1,6 +1,6 @@
 # Mobile Engineering Playbook
 
-Version: 0.4.2
+Version: 0.4.3
 
 ## Purpose
 
@@ -368,7 +368,25 @@ Imperative redirects remain valid for explicit transitions that are not access g
 
 Protected Routes are a client-side navigation/UX mechanism, not a server security boundary. Every backend/API operation that reads or mutates protected data must independently authenticate the caller and enforce authorization on the server.
 
-Model session restoration explicitly. When auth state is still unknown/restoring, do not briefly render protected UI and redirect afterward. Handle expired/revoked credentials and logout deliberately, including removing credentials and invalidating user-scoped cached/persisted data where retaining it could expose the previous user's data.
+Model restoration and session transitions deliberately:
+
+```text
+restoring
+├─ valid identity → authenticated
+└─ no/invalid identity → unauthenticated
+
+authenticated
+├─ refresh/rotate credentials for same identity → authenticated
+├─ expired/revoked credentials → re-authentication required
+├─ logout → unauthenticated
+└─ account switch → clear previous-user scoped state → authenticate new identity
+```
+
+Do not briefly render protected UI while restoration is still unknown/loading.
+
+Refreshing or rotating credentials for the same authenticated identity is not logout and should not clear otherwise valid user state by default.
+
+On logout or account switch, remove credentials that should no longer remain and invalidate user-scoped cached/persisted data where retaining it could expose the previous user's information.
 
 References:
 
@@ -377,11 +395,11 @@ References:
 
 ## 7.2 Route error boundaries
 
-Expected product states and unexpected React render/lifecycle failures are different problems.
+Expected product states and unexpected React render/component-tree failures are different problems.
 
 Expected states such as payment decline, validation errors, empty results, denied permissions, and ordinary network failures should be modeled explicitly in product UI.
 
-Use Expo Router route or layout Error Boundaries for unexpected React render/lifecycle failures and recovery scopes.
+Use Expo Router route or layout Error Boundaries for unexpected React render/component-tree failures and recovery scopes.
 
 Prefer the smallest useful boundary: route-level when a screen can recover independently, layout/navigator-level for a shared group, and application-level for truly global render failures.
 
@@ -707,7 +725,7 @@ Only after meaningful product behavior exists should the application add capabil
 - offline behavior;
 - cache policy;
 - background processing;
-- lifecycle/interruption recovery where the product requires it;
+- application-lifecycle/interruption recovery where the product requires it;
 - observability;
 - performance profiling;
 - feature flags;
@@ -847,7 +865,7 @@ Products with probabilistic, AI, sensor, or recognition behavior may have uncert
 
 Expected states belong in ordinary product UI.
 
-At an appropriate application boundary, provide a way to contain unexpected React render/lifecycle failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling or explicit handling of event-handler/async-operation failures.
+At an appropriate application boundary, provide a way to contain unexpected React render/component-tree failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling or explicit handling of event-handler/async-operation failures.
 
 When using Expo Router, route files and layouts can own recovery boundaries at the smallest appropriate scope.
 
@@ -944,7 +962,7 @@ verify keyboard behavior with the keyboard open
 verify supported appearance/orientation behavior
 ```
 
-For lifecycle-sensitive workflows, also verify the interruptions the product promises to support, such as cold start, background/resume, process restart, session expiration, or interrupted mutations.
+For application-lifecycle-sensitive workflows, also verify the interruptions the product promises to support, such as cold start, background/resume, process restart, session expiration, or interrupted mutations.
 
 Use agent-device or an equivalent device-driving tool for exploratory and visual verification after a runnable UI exists.
 
@@ -990,7 +1008,7 @@ Before implementation:
 - load this playbook when making architecture/startup decisions or resolving an unfamiliar mobile-engineering question;
 - load `guides/decision-ladder.md` before adding or adopting a cross-cutting dependency/framework;
 - load `guides/agent-failure-modes.md` when generated code is suspiciously web-shaped, dependency-heavy, or overbuilt;
-- load `guides/platform-native-rules.md` when the task touches native configuration, auth routing/security boundaries, storage, safe areas, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior;
+- load `guides/platform-native-rules.md` when the task touches native configuration, auth routing/security boundaries, storage, safe areas, keyboard behavior, OTA/native compatibility, or application-lifecycle/interruption behavior;
 - load `guides/vertical-slice-checklist.md` before calling a meaningful feature slice complete;
 - load an archetype only when it was explicitly selected and materially relates to the current task;
 - determine the smallest vertical slice that satisfies the task;
@@ -1023,7 +1041,7 @@ After implementation:
 - inspect the rendered UI;
 - verify important states;
 - verify relevant keyboard/safe-area/system-UI behavior;
-- verify lifecycle/interruption behavior when the product depends on it;
+- verify application-lifecycle/interruption behavior when the product depends on it;
 - verify OTA/native compatibility when the product uses OTA delivery;
 - only then refine visual details or introduce more abstraction.
 
@@ -1076,7 +1094,7 @@ Treat WebView content and message bridges as security boundaries.
 
 Client-side navigation guards are not authorization boundaries. Protected backend operations must authenticate and authorize independently on the server.
 
-On logout or account/session change, invalidate user-scoped local/cached data where retaining it could expose another user's information.
+On logout or account switch, invalidate user-scoped local/cached data where retaining it could expose another user's information. Credential refresh or rotation for the same authenticated identity is not an account switch and should not be treated as logout by default.
 
 For products with meaningful security risk, use OWASP MASVS as a reference rather than expanding this playbook into a full mobile-security standard.
 
@@ -1106,6 +1124,10 @@ Treat `runtimeVersion` as the compatibility contract between an OTA update and t
 
 When native runtime changes, create a new compatible binary and ensure updates target the matching runtimeVersion.
 
+Follow current Expo guidance for runtimeVersion policy instead of freezing a policy choice into the playbook. As of this revision, Expo recommends the `appVersion` policy for its common deployment workflow.
+
+The `fingerprint` policy can reduce manual compatibility mistakes by changing runtimeVersion when native-impacting inputs change, but current Expo guidance describes it as experimental/not yet widely recommended. Evaluate it deliberately rather than making it the universal default.
+
 Before promoting a production OTA update:
 
 - verify it on a preview/staging build using the intended compatible runtime;
@@ -1117,6 +1139,7 @@ Do not publish one OTA bundle indiscriminately to incompatible native runtimes.
 
 References:
 
+- https://docs.expo.dev/eas-update/deployment/
 - https://docs.expo.dev/eas-update/runtime-versions/
 - https://docs.expo.dev/build/updates/
 
@@ -1160,7 +1183,7 @@ At minimum:
 - text-entry flows have been verified with the keyboard open where relevant;
 - client route protection is not relied on as the only authorization control;
 - event-handler/async-operation failures are handled explicitly when relevant;
-- lifecycle/interruption behavior has been verified when the workflow depends on it;
+- application-lifecycle/interruption behavior has been verified when the workflow depends on it;
 - OTA/native compatibility has been verified when the product uses OTA updates.
 
 For critical production flows, add deterministic E2E coverage.
