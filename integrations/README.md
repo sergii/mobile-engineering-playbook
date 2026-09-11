@@ -29,7 +29,7 @@ Shared documents are loaded conditionally:
 - architecture/startup/unfamiliar mobile decision → core playbook;
 - dependency choice → decision ladder;
 - suspicious generated code → failure modes;
-- native/auth/storage/layout/keyboard concern → platform-native rules;
+- native/auth-security/storage/layout/keyboard/OTA/lifecycle concern → platform-native rules;
 - feature completion → vertical-slice checklist;
 - archetype → only when explicitly selected and relevant.
 
@@ -52,4 +52,4 @@ For a new repository that needs a minimal local contract, start from:
 
 - [`../templates/product/AGENTS.md`](../templates/product/AGENTS.md)
 
-It demonstrates how to reference the shared playbook, optionally select an archetype, and keep product-owned rules local without copying the full standard.
+The template records the adopted playbook revision, target platforms, native ownership model, project commands, optional archetype, and local product rules. Keep the product pinned to a deliberate playbook revision rather than silently following a changing `main` baseline.
