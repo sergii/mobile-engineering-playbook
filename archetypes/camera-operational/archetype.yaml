@@ -63,6 +63,22 @@ typical_components:
   - CorrectionAction
   - OperationResult
 
+architecture_bias_semantics:
+  represents:
+    - likelihood
+    - relative_product_pressure
+  does_not_represent:
+    - implementation_priority
+    - required_architecture
+    - dependency_requirement
+    - package_installation_instruction
+  scale:
+    low: uncommon_or_usually_secondary
+    low_medium: sometimes_relevant
+    medium: commonly_relevant
+    medium_high: likely_to_become_important
+    high: central_product_force
+
 architecture_bias:
   native_runtime_configuration: high
   permissions: high
