@@ -69,11 +69,14 @@ This slice exposes product forces that are easy to miss in a single-use demo:
 
 - reset latency;
 - accidental duplicate operations;
+- idempotency/deduplication when repeated confirmation could mutate domain state twice;
 - haptic fatigue;
 - visual state persistence;
 - throughput;
 - error recovery;
 - one-handed ergonomics.
+
+Do not treat duplicate prevention as only a UI debouncing problem when the operation has server-side effects. Define the product/API idempotency or deduplication behavior when repeated execution matters.
 
 ## Slice 5: Connectivity loss
 
@@ -99,8 +102,26 @@ Before implementing this slice, define:
 
 A generic network error screen is not this slice.
 
+## Application-lifecycle interruption
+
+Camera-operational workflows often cross OS/application-lifecycle boundaries because camera access, permissions, recognition, uploads, queues, or mutations may be active when the app backgrounds or the process is terminated.
+
+When the product depends on continuity across interruption, verify the real intended behavior for:
+
+```text
+scanning/capture
+→ app backgrounds
+→ app resumes
+→ permission/camera readiness is revalidated when necessary
+→ interrupted work is restored, restarted, discarded, or re-confirmed deliberately
+```
+
+Do not prescribe one universal camera resource-management implementation here. The product and current camera/runtime APIs determine the correct mechanism.
+
 ## Verification emphasis
 
 Camera-operational slices should usually be exercised in a running simulator or device, and camera-critical behavior should eventually be checked on a physical device.
+
+Also exercise background/resume and repeated-operation behavior when those interruptions can affect correctness.
 
 Use deterministic E2E coverage for critical stable paths and device-driving tools for exploratory/visual verification.
