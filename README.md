@@ -47,8 +47,10 @@ Project-specific documented requirements always override an archetype, and arche
 - [`AGENTS.md`](./AGENTS.md) - compact operating contract for coding agents.
 - [`guides/decision-ladder.md`](./guides/decision-ladder.md) - when to introduce common tools and abstractions.
 - [`guides/agent-failure-modes.md`](./guides/agent-failure-modes.md) - common AI coding mistakes in React Native / Expo projects.
+- [`guides/platform-native-rules.md`](./guides/platform-native-rules.md) - CNG/Prebuild ownership, Expo Router auth/error boundaries, safe areas, edge-to-edge, and keyboard correctness.
 - [`guides/vertical-slice-checklist.md`](./guides/vertical-slice-checklist.md) - compact Definition of Done for a vertical slice.
 - [`archetypes/`](./archetypes/) - optional product-class context and examples.
+- [`integrations/`](./integrations/) - thin adapters for Codex, Claude Code, Cursor, and GitHub Copilot.
 
 ## Archetypes
 
@@ -60,18 +62,41 @@ More archetypes can be added later, for example e-commerce, marketplace, messagi
 
 Do not add an archetype merely to create a taxonomy. Add one when repeated product forces justify reusable guidance.
 
+## Platform baseline highlights
+
+The current playbook explicitly covers several mobile/agent failure points that should not remain implicit:
+
+- New Architecture as the modern Expo baseline;
+- Expo Go vs development builds;
+- CNG/Prebuild vs manually owned native projects;
+- config plugins and reproducible native configuration;
+- Expo Router Protected Routes for route-level access control;
+- route/layout Error Boundaries for unexpected runtime failures;
+- storage selection by sensitivity and data shape;
+- edge-to-edge and safe-area ownership;
+- keyboard-open verification for text-entry flows.
+
 ## How to use it
 
 For a new product repository:
 
-1. Put a small `AGENTS.md` in the product repository.
+1. Put a small agent-instruction file in the product repository.
 2. Reference this playbook as the shared engineering baseline.
 3. Explicitly reference an archetype only when it is useful for that product.
 4. Add product-specific domain rules, terminology, workflows, and constraints locally.
 5. Let project-specific rules override generic examples.
 6. Do not vendor the whole playbook into every project unless there is a concrete offline or governance reason.
 
-For other agent environments, map the same operating rules into the local mechanism, such as `CLAUDE.md`, Cursor rules, or repository-level agent instructions.
+Use the adapter examples under `integrations/` as starting points:
+
+```text
+Codex          → AGENTS.md
+Claude Code    → CLAUDE.md
+Cursor         → .cursor/rules/*.mdc
+GitHub Copilot → .github/copilot-instructions.md
+```
+
+The adapters are intentionally thin. They point to the shared playbook rather than duplicating it.
 
 ## Example policy
 
@@ -90,6 +115,7 @@ Examples are illustrative, not normative. A scanner, checkout, inbox, map, or me
 - Deterministic tests for known behavior.
 - Device inspection for exploratory and visual verification.
 - Dependencies must solve an existing, identifiable problem.
+- Native changes must respect the project's source-of-truth model.
 - Archetypes guide context; they do not dictate architecture.
 - Complexity must be earned.
 
