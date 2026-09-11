@@ -2,7 +2,7 @@
 
 This guide records platform rules that are easy for coding agents to get wrong in Expo / React Native projects.
 
-Use it together with `MOBILE_ENGINEERING_PLAYBOOK.md` and `guides/decision-ladder.md`.
+Load this guide when the task touches native configuration, authentication routing, storage, safe areas, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior. Do not load it for unrelated small tasks.
 
 ## 1. Continuous Native Generation and Prebuild
 
@@ -45,7 +45,7 @@ References:
 
 ---
 
-## 2. Expo Router authentication
+## 2. Expo Router authentication and authorization
 
 Prefer declarative route protection over imperative redirect effects.
 
@@ -79,13 +79,48 @@ useEffect(() => {
 
 Imperative redirects still have valid uses, but authentication guards should not be implemented primarily as screen effects when Protected Routes express the rule directly.
 
-Reference: https://docs.expo.dev/router/advanced/authentication/
+### Protected Routes are not a security boundary
+
+Protected Routes control client-side navigation and UX. They do not replace server-side authentication or authorization.
+
+Every backend/API operation that reads or mutates protected data must independently authenticate the caller and enforce authorization on the server.
+
+Do not infer that hiding or protecting a screen makes its API operations secure.
+
+### Session lifecycle
+
+Model session restoration explicitly instead of collapsing it into a single boolean too early.
+
+A common state shape is:
+
+```text
+unknown / restoring
+→ authenticated
+→ unauthenticated
+→ expired / revoked
+```
+
+While session restoration is still unknown/loading, do not briefly render protected product UI and redirect afterward.
+
+When credentials are expired or revoked, transition deliberately to the unauthenticated state and handle any pending user action according to product requirements.
+
+On logout:
+
+- remove credentials that should no longer remain on the device;
+- clear or invalidate user-scoped cached/persisted data where retaining it could expose the previous user's data;
+- reset navigation/access state deliberately;
+- do not erase unrelated device-local data unless the product requires it.
+
+References:
+
+- https://docs.expo.dev/router/advanced/authentication/
+- https://docs.expo.dev/router/advanced/protected/
 
 ---
 
 ## 3. Route error boundaries
 
-Expected product states and unexpected runtime failures are different problems.
+Expected product states and unexpected React render/lifecycle failures are different problems.
 
 Examples of expected states:
 
@@ -99,7 +134,7 @@ validation error
 
 Model these explicitly in product UI.
 
-For unexpected render/runtime failures in Expo Router, use route or layout error boundaries where the recovery scope makes sense.
+Use Expo Router route or layout Error Boundaries for unexpected React render/lifecycle errors where the recovery scope makes sense.
 
 A route can export:
 
@@ -115,11 +150,26 @@ Use the smallest useful boundary:
 
 - route-level when one screen can recover independently;
 - layout/navigator-level when a group of routes shares a recovery boundary;
-- application-level for truly global failures.
+- application-level for truly global render failures.
+
+Error Boundaries are not universal runtime exception handlers. In particular, ordinary event-handler failures and most asynchronous callback/operation failures need explicit handling at the operation boundary.
+
+For example:
+
+```text
+render/lifecycle failure
+→ Error Boundary
+
+event handler / async operation / network mutation failure
+→ explicit try/catch/result handling + product state/reporting as appropriate
+```
 
 Do not use Error Boundaries as a substitute for normal loading/error/empty state modeling.
 
-Reference: https://docs.expo.dev/router/error-handling/
+References:
+
+- https://docs.expo.dev/router/error-handling/
+- https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
 
 ---
 
@@ -167,7 +217,69 @@ Reference: https://docs.expo.dev/guides/keyboard-handling/
 
 ---
 
-## 6. Platform verification rule
+## 6. OTA updates and native compatibility
+
+These rules apply only when the product adopts EAS Update or another OTA JavaScript update mechanism.
+
+An OTA update can replace compatible JavaScript/assets. It cannot add native code or native capabilities to an already installed binary.
+
+Treat `runtimeVersion` as the compatibility contract between an update and the native binary.
+
+When the native runtime changes, for example because a native library, config plugin output, entitlement, native module, or relevant app configuration changes:
+
+```text
+native runtime changed
+→ create a new compatible binary
+→ ensure OTA updates target the matching runtimeVersion
+```
+
+Before promoting an OTA update to production:
+
+- verify it on a preview/staging build that uses the same compatible runtime;
+- verify important migrations and startup behavior;
+- know the rollback path;
+- use a gradual rollout when product risk justifies it.
+
+Do not publish one JavaScript update indiscriminately to binaries with incompatible native runtimes.
+
+Do not treat OTA as a substitute for App Store / Play Store builds when native code must change.
+
+References:
+
+- https://docs.expo.dev/eas-update/runtime-versions/
+- https://docs.expo.dev/build/updates/
+
+---
+
+## 7. Application lifecycle
+
+Mobile processes are interruptible. A feature that works only while one screen stays mounted is not necessarily reliable product behavior.
+
+When a workflow owns long-lived, persisted, authentication-sensitive, payment-sensitive, upload, queue, or mutation state, deliberately consider:
+
+```text
+cold start
+foreground → background
+background → foreground
+process termination
+session expiration while inactive
+network loss / retry
+interrupted mutation
+```
+
+Do not persist every transient UI state merely to survive process death. Persist only product state that is genuinely valuable or required to recover.
+
+For retryable mutations, define idempotency/deduplication behavior where duplicate execution would matter.
+
+For drafts, uploads, queues, and other resumable workflows, define whether the product should restore, restart, discard, or ask the user after interruption.
+
+Use `AppState` or another appropriate platform mechanism only when actual lifecycle-aware behavior is required; do not add lifecycle infrastructure preemptively.
+
+Reference: https://reactnative.dev/docs/appstate
+
+---
+
+## 8. Platform verification rule
 
 For native-facing changes, verification means more than TypeScript and Metro.
 
@@ -185,4 +297,4 @@ exercise the real flow
 inspect platform behavior
 ```
 
-When a config plugin, native dependency, entitlement, permission, or native module changes, rebuild the development/production-like client before declaring the behavior verified.
+When a config plugin, native dependency, entitlement, permission, native module, or runtimeVersion-relevant native change occurs, rebuild the appropriate development/preview/production-like client before declaring the behavior verified.
