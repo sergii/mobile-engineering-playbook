@@ -16,7 +16,7 @@ Product-specific documented rules override generic examples in the shared playbo
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - adding/adopting a dependency → `guides/decision-ladder.md`
 - suspicious generated or overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth routing, storage, safe areas, keyboard, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
 - explicitly selected archetype → that archetype when relevant
 
@@ -30,8 +30,10 @@ Default behavior:
 - add dependencies only for demonstrated problems;
 - determine CNG/native-project ownership before persistent native edits;
 - do not infer API adoption from transitive dependencies;
-- keep auth identity, credential storage, route protection, profile/server data, and app state as separate concerns;
+- keep auth identity, credential storage, route protection, server authorization, profile/server data, and app state as separate concerns;
+- never treat client route protection as backend authorization;
 - verify meaningful UI/native behavior in the running mobile runtime;
+- verify interruption/restart behavior when the workflow depends on it;
 - keep architecture proportional to current product complexity.
 
 Before calling a meaningful feature complete, exercise the changed flow and use the playbook's vertical-slice definition of done.
