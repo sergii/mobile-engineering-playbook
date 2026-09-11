@@ -9,6 +9,8 @@ Add it when the application has a concrete problem that the tool solves better t
 
 Archetypes may indicate that a class of product is more likely to encounter a problem earlier, but they never override this ladder.
 
+Before adopting any dependency with native/runtime implications, verify that it supports the current Expo / React Native New Architecture, including bridgeless operation where applicable. Avoid dependencies that require the legacy bridge, disabling the New Architecture, or obsolete compatibility hacks.
+
 ---
 
 # 1. Styling
