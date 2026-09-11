@@ -8,7 +8,8 @@ Before making implementation or architectural decisions, read:
 
 1. `MOBILE_ENGINEERING_PLAYBOOK.md`
 2. `guides/decision-ladder.md`
-3. The target application's own `AGENTS.md`, README, architecture notes, and domain documentation
+3. `guides/agent-failure-modes.md`
+4. The target application's own `AGENTS.md`, README, architecture notes, and domain documentation
 
 Project-specific documented requirements override this generic playbook.
 
@@ -19,14 +20,15 @@ Use the simplest implementation that correctly expresses the product requirement
 Start from:
 
 - current stable Expo SDK;
-- the React Native version supported by that Expo SDK;
-- TypeScript;
+- the React Native and React versions supported by that Expo SDK;
+- React Native New Architecture as the modern baseline;
+- TypeScript with strict checking;
 - Expo Router for real application navigation;
 - React Native primitives;
 - `StyleSheet`;
 - Expo platform APIs where appropriate.
 
-Do not install a UI framework, styling framework, state-management library, animation framework, server-state library, or testing framework merely because it is commonly used.
+Do not install a UI framework, styling framework, state-management library, animation framework, server-state library, or testing framework merely because it is common in modern starter projects.
 
 Every dependency must solve a concrete problem that exists now.
 
@@ -42,6 +44,15 @@ open scanner
 → resolve item
 → show result
 → confirm
+```
+
+Also good:
+
+```text
+open checkout
+→ choose payment method
+→ confirm payment
+→ show receipt
 ```
 
 Bad:
@@ -69,6 +80,34 @@ React Native primitive
 
 Stop as soon as the problem is solved well enough.
 
+## Agent guardrails
+
+AI coding agents commonly import web habits or infer architecture from installed packages. Do not do that.
+
+- Do not use DOM elements such as `div`, `span`, or `button` in native application code.
+- Do not introduce CSS or `className` unless the project has explicitly adopted a system that supports them.
+- Do not install NativeWind, Tamagui, Unistyles, or another styling system "for speed" without a documented product need.
+- Do not treat the presence of a direct or transitive package as permission to adopt it in application code.
+- Do not remove packages that are required transitively by Expo Router, Expo, or another adopted tool merely because application code does not import them directly.
+- Do not assume Expo Go is the production development runtime once native libraries or native configuration matter.
+- Do not declare native behavior verified only because TypeScript passes or Metro starts.
+- Do not add web-only patterns, browser storage, or browser navigation assumptions to native code without an explicit cross-platform requirement.
+- Do not weaken types to make generated code compile. Avoid `any`; when unavoidable, isolate and justify it.
+- Do not create barrel files by habit. Add them only when they improve a real module boundary.
+- Do not add a dependency before checking whether the project already has an adopted solution for the same problem.
+
+See `guides/agent-failure-modes.md` for examples and recovery rules.
+
+## Runtime rule
+
+Expo Go is acceptable for very early experiments that fit entirely inside its bundled native capabilities.
+
+Move to a development build when native runtime configuration matters, including when a feature requires native libraries, config plugins, app-specific entitlements, or capabilities not present in Expo Go.
+
+Once the product depends on a development build, verify native features in that development build or a production-like build, not only in Expo Go.
+
+EAS is an Expo-integrated build and delivery option, not a mandatory architecture requirement. Local native builds are valid when they fit the project.
+
 ## UI rules
 
 - Domain components are preferred over speculative generic abstractions.
@@ -80,6 +119,13 @@ Stop as soon as the problem is solved well enough.
 - Add Reanimated or Gesture Handler only when interaction complexity requires them.
 - Motion must explain state, causality, continuity, or spatial relationships. Avoid decorative motion by default.
 - Accessibility is part of correctness.
+
+## TypeScript rules
+
+- Keep `strict` enabled in new projects unless a documented compatibility constraint prevents it.
+- Prefer explicit domain types over broad object shapes.
+- Avoid `any`. If an external boundary forces it, contain the unsafe value at that boundary and convert it to a validated type.
+- Do not use type assertions merely to silence a design or data-model problem.
 
 ## Verification rules
 
@@ -99,7 +145,7 @@ Use Maestro for critical end-to-end user journeys when E2E coverage is justified
 
 Use agent-device or an equivalent device-control tool for exploratory, visual, and agent-driven verification after a runnable UI exists.
 
-Do not use agent-device as a substitute for deterministic E2E tests.
+Do not use device-driving agents as a substitute for deterministic regression tests.
 
 ## Dependency rule
 
@@ -109,10 +155,13 @@ Before adding a dependency, answer:
 2. Can React Native solve it?
 3. Can Expo solve it?
 4. Can a small local abstraction solve it?
-5. Why is this dependency the smallest appropriate solution?
-6. What runtime, build, upgrade, or maintenance cost does it introduce?
+5. Is there already an adopted solution in this project?
+6. Why is this dependency the smallest appropriate solution?
+7. What runtime, native-build, upgrade, bundle, or maintenance cost does it introduce?
 
 If these questions do not have convincing answers, do not add the dependency.
+
+A package being present transitively is not the same as the project adopting that package's API.
 
 ## Change discipline
 
@@ -126,12 +175,12 @@ If these questions do not have convincing answers, do not add the dependency.
 
 At minimum, a completed vertical slice should:
 
-- boot successfully;
+- boot successfully in the correct runtime;
 - be reachable through the intended navigation;
 - allow the primary user action;
 - produce a visible expected result;
-- handle important loading, disabled, empty, and failure states where relevant;
-- pass TypeScript and relevant checks;
+- handle important loading, disabled, empty, permission, and failure states where relevant;
+- pass strict TypeScript and relevant checks;
 - provide basic accessibility for custom interactive controls;
 - avoid unnecessary dependencies;
 - have been inspected in a running application.

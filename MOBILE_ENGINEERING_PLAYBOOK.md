@@ -1,22 +1,22 @@
 # Mobile Engineering Playbook
 
-Version: 0.1
+Version: 0.2
 
 ## Purpose
 
-This playbook defines the default engineering approach for building modern mobile applications with React Native and Expo.
+This playbook defines a reusable engineering baseline for modern mobile applications built with React Native and Expo.
 
-It is intended for AI-assisted development with Codex and similar coding agents, but the principles apply equally to human contributors.
+It is intended for AI-assisted development and human contributors. It is deliberately principle-first and UI-library-neutral.
 
-The goal is not to prescribe a visual style, component library, state-management library, or application architecture prematurely.
+The goal is not to prescribe a visual style, component library, state library, or large application architecture before the product requires one.
 
-The goal is to produce applications that are:
+The goal is to build applications that are:
 
 - simple before they are sophisticated;
 - functional before they are polished;
 - native-feeling without unnecessary native code;
 - domain-driven rather than framework-driven;
-- easy for humans and coding agents to understand;
+- easy for humans and agents to understand;
 - testable and observable;
 - able to evolve without early architectural lock-in.
 
@@ -58,16 +58,6 @@ Do not add a library merely because it is popular or commonly included in starte
 
 Every abstraction must solve an identifiable problem.
 
-Examples of valid reasons:
-
-- complex gesture coordination;
-- advanced animations;
-- server-state caching;
-- responsive theme switching;
-- deterministic end-to-end testing;
-- high-performance custom rendering;
-- platform APIs not covered by Expo.
-
 "Modern React Native apps use it" is not a valid reason.
 
 ## 1.2 Expo-first
@@ -80,22 +70,7 @@ Do not independently upgrade React Native underneath Expo without a documented c
 
 Prefer Expo APIs when they adequately solve the product requirement.
 
-Examples may include:
-
-```text
-expo-camera
-expo-haptics
-expo-image
-expo-notifications
-expo-secure-store
-expo-file-system
-expo-location
-expo-av / current Expo media APIs
-```
-
-The exact package list evolves. Always verify the current Expo documentation instead of relying on an old package list.
-
-Introduce custom native code only when Expo or a mature React Native package cannot satisfy the requirement.
+The exact package list evolves. Verify current Expo documentation instead of relying on historical package lists.
 
 ## 1.3 React Native primitives first
 
@@ -120,33 +95,11 @@ StyleSheet
 
 A product does not need a generic UI kit in order to have excellent UI.
 
-Domain-specific components are usually more valuable than generic wrappers.
-
-Prefer:
-
-```tsx
-<ScannerViewfinder />
-<ItemRecognitionResult />
-<StorageLocationCard />
-<ThermostatDial />
-<MoveConfirmation />
-```
-
-over speculative abstractions such as:
-
-```tsx
-<FancyCard />
-<UniversalPanel />
-<MagicContainer />
-```
-
-unless real reuse demonstrates that the abstraction is useful.
-
-## 1.4 Product architecture before library architecture
+## 1.4 Product architecture before framework architecture
 
 Libraries should adapt to the product, not the other way around.
 
-Do not redesign the product's interaction model to fit a component library or state framework unless there is a compelling reason.
+Do not redesign the product's interaction model to fit a component library, state framework, or styling system without a compelling reason.
 
 ## 1.5 Prefer reversible decisions early
 
@@ -155,13 +108,62 @@ Early product development contains uncertainty.
 Prefer choices that are easy to remove or replace:
 
 - local state before global state;
-- plain StyleSheet before a styling framework;
+- plain `StyleSheet` before a styling framework;
 - local mock services before a large data layer;
 - one real workflow before a universal architecture.
 
 ---
 
-# 2. Default Technical Foundation
+# 2. Modern Platform Baseline
+
+## 2.1 New Architecture is the baseline
+
+Current Expo SDKs run on React Native's New Architecture. Treat this as the normal platform, not an optional advanced mode.
+
+For new projects:
+
+- assume New Architecture;
+- prefer libraries that explicitly support the current React Native and Expo versions;
+- do not design new code around the legacy bridge;
+- verify native dependencies against the current Expo compatibility guidance;
+- prefer Expo Modules API for application-specific native modules.
+
+Do not pin this playbook to one SDK number. Verify current behavior in Expo documentation.
+
+Reference: https://docs.expo.dev/guides/new-architecture/
+
+## 2.2 Expo Go vs development builds
+
+Expo Go is useful for learning, experiments, and very early prototypes that fit inside its bundled native capabilities.
+
+A development build is the normal runtime once the application depends on native configuration or native libraries that are specific to the product.
+
+Move to a development build when any of the following becomes relevant:
+
+- native libraries not bundled in Expo Go;
+- config plugins;
+- app-specific permissions or entitlements;
+- custom native modules;
+- native SDK integration;
+- production-like runtime behavior.
+
+Once a feature depends on a development build, verify that feature in the development build or a production-like build. Do not use Expo Go as proof that native behavior works.
+
+Development builds can be built locally or through EAS. EAS is an integrated Expo delivery option, not a mandatory application architecture.
+
+Reference: https://docs.expo.dev/develop/development-builds/introduction/
+
+## 2.3 Native modules
+
+Stay inside Expo and mature React Native libraries when they solve the requirement well.
+
+When application-specific native code is justified, prefer Expo Modules API unless a different native integration model has a documented advantage.
+
+Reference: https://docs.expo.dev/modules/overview/
+
+---
+
+# 3. Default Technical Foundation
 
 The default starting stack is intentionally small:
 
@@ -198,36 +200,23 @@ Introduce them when the application develops a problem they clearly solve.
 
 ---
 
-# 3. Version Policy
+# 4. TypeScript Baseline
 
-## 3.1 Prefer current stable versions
+Use TypeScript with strict checking in new projects unless a documented compatibility constraint prevents it.
 
-At project creation time:
+Prefer explicit domain types over broad object shapes.
 
-1. determine the current stable Expo SDK;
-2. use the React Native and React versions supported by that SDK;
-3. use current stable TypeScript compatible with the toolchain;
-4. verify Expo Router and required Expo packages against the same SDK.
+Avoid `any`.
 
-Do not hard-code this playbook to a historical SDK number.
+If an unsafe external boundary forces an `any`-like value, isolate the unsafe boundary and convert the value into a validated application type as early as possible.
 
-## 3.2 Upgrade intentionally
+Do not add type assertions merely to silence a design, API, or state-model problem.
 
-Before an Expo SDK upgrade:
-
-- read the Expo upgrade guide;
-- review React Native breaking changes;
-- run type checks and tests;
-- run the application on supported platforms;
-- inspect critical UI flows;
-- verify native permissions and config plugins;
-- verify third-party native dependencies.
-
-Use official Expo upgrade tooling and skills when available.
+Do not weaken project-wide type safety to make generated code compile.
 
 ---
 
-# 4. Dependency Policy
+# 5. Dependency Policy
 
 Dependencies are liabilities as well as capabilities.
 
@@ -242,6 +231,8 @@ Can Expo already solve it?
 
 Can a small local abstraction solve it?
 
+Is there already an adopted solution for this problem?
+
 Is the problem present now or merely anticipated?
 
 What maintenance, bundle, native-build, runtime, or upgrade cost does it introduce?
@@ -251,13 +242,25 @@ Do not add infrastructure for hypothetical future requirements.
 
 Prefer a small dependency graph.
 
+## 5.1 Installed does not mean adopted
+
+A package may exist because another adopted tool depends on it.
+
+The presence of a package in the dependency tree does not automatically mean application code should begin using its API.
+
+Likewise, do not remove a package merely because application code does not import it directly. Verify whether Expo, Expo Router, a config plugin, or another dependency requires it.
+
+Before adopting an already-present package in application code, apply the same decision rule as for a new dependency.
+
+## 5.2 Record significant choices
+
 When a dependency is cross-cutting or difficult to reverse, record the reason in a short ADR or pull request note.
 
 See `guides/decision-ladder.md` for concrete escalation guidance.
 
 ---
 
-# 5. Navigation
+# 6. Navigation
 
 For real applications, prefer Expo Router.
 
@@ -273,80 +276,60 @@ sheet
 deep link
 ```
 
-Avoid long-lived application navigation implemented through large conditional trees such as:
+A tiny prototype may temporarily use local state to switch between one or two views.
 
-```tsx
-activeScreen === 'home'
-  ? <Home />
-  : activeScreen === 'profile'
-    ? <Profile />
-    : ...
-```
+Once navigation becomes product behavior, move to Expo Router.
 
-A tiny prototype may temporarily use this approach.
+Navigation should deliberately handle relevant behaviors such as:
 
-Once navigation becomes part of the product architecture, move to Expo Router.
-
-Navigation should support product behavior such as:
-
-- deep links;
+- deep links and universal/app links;
 - notification-driven destinations;
 - modal flows;
 - nested workflows;
-- back behavior;
-- restoration where required.
+- platform-correct back behavior;
+- restoration where the product requires it.
 
 Do not invent wrapper abstractions over Expo Router before real repetition demonstrates a need.
 
 ---
 
-# 6. Styling
+# 7. Styling
 
-## 6.1 Start with StyleSheet
+## 7.1 Start with StyleSheet
 
-Start with React Native `StyleSheet`.
+Start with React Native `StyleSheet` and local component styles.
 
-```tsx
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
-```
+Do not introduce a styling framework until plain `StyleSheet` creates a concrete limitation.
 
-Do not introduce a styling framework until plain StyleSheet creates a concrete limitation.
-
-Possible future reasons for another styling layer include:
+Possible future reasons include:
 
 - complex runtime theming;
 - multiple product themes;
-- responsive breakpoints across phone and tablet;
-- large-scale theme propagation;
-- high-contrast operational modes;
-- extensive platform-dependent styling;
-- design-system scale that makes plain imports difficult to maintain.
+- substantial phone/tablet responsive behavior;
+- large-scale semantic token switching;
+- repeated media-query-like behavior;
+- difficult platform-specific style branching;
+- design-system scale that makes plain imports hard to maintain.
 
-When such a problem appears, evaluate the smallest tool that solves it.
+When a problem appears, evaluate the smallest tool that solves it.
 
-Do not globally pre-select Unistyles, NativeWind, Tamagui, or another styling framework.
+Do not pre-select Unistyles, NativeWind, Tamagui, or another styling framework globally.
 
-## 6.2 Avoid style abstraction for its own sake
+## 7.2 Native code is not web code
 
-Do not turn every style object into a helper.
+Do not use DOM elements, browser CSS assumptions, or `className` by default in native application code.
 
-Local component styles are good when the style is local to that component.
+A project may explicitly adopt a library that provides such syntax. That is an architectural choice and must be deliberate.
 
-Extract style concepts only when they represent shared product meaning or repeated decisions.
+See `guides/agent-failure-modes.md`.
 
 ---
 
-# 7. Design Tokens
+# 8. Design Tokens
 
-Even with plain StyleSheet, repeated visual decisions should gradually become tokens.
+Even with plain `StyleSheet`, repeated visual decisions should gradually become tokens.
 
-Begin small.
-
-Example:
+Begin small:
 
 ```text
 theme/
@@ -355,35 +338,9 @@ theme/
   typography.ts
 ```
 
-A small token layer is enough for an early product.
-
-## 7.1 Primitive tokens
-
-Primitive tokens describe raw values:
-
-```text
-spacing.sm
-spacing.md
-spacing.lg
-fontSize.body
-fontSize.title
-```
-
-These are useful, but they are not the final design language.
-
-## 7.2 Semantic tokens
-
 As the product matures, prefer semantic tokens over purely visual names.
 
-Instead of:
-
-```text
-green500
-gray700
-spacing16
-```
-
-prefer:
+Prefer:
 
 ```text
 text.primary
@@ -394,6 +351,14 @@ border.subtle
 action.primary
 ```
 
+over raw names such as:
+
+```text
+green500
+gray700
+spacing16
+```
+
 For domain-heavy products, semantic tokens may become domain-specific:
 
 ```text
@@ -402,27 +367,15 @@ scanner.detecting
 scanner.success
 scanner.uncertain
 scanner.error
-storage.available
-storage.occupied
 ```
-
-Tokens should express product meaning where useful.
 
 Do not attempt to design the complete token system before the product exists.
 
-Let repeated product decisions reveal the system.
-
-## 7.3 Avoid fake token adoption
-
-A token file is not useful if components continue to hard-code the same values inconsistently.
-
-When a token represents a deliberate shared product decision, use it consistently.
-
-Do not force one-off values into the token system merely to avoid literals.
+A token file is not useful if components continue to hard-code the same shared decisions inconsistently.
 
 ---
 
-# 8. Domain-Driven UI
+# 9. Domain-Driven UI
 
 The user interface should reflect the domain.
 
@@ -432,57 +385,33 @@ Before designing a flow, ask:
 
 ```text
 What is the main object the user is manipulating?
-
-What physical or digital event is taking place?
-
-What information matters at this moment?
-
+What event is taking place?
+What information matters now?
 What uncertainty exists?
-
 What can go wrong?
-
 What is the next likely action?
 ```
 
-UI structure should follow those answers.
-
-For operational applications, domain state is often more important than decorative hierarchy.
-
-Examples:
-
-```text
-scanning
-recognizing
-recognized
-uncertain
-confirmed
-moving
-stored
-failed
-```
-
-These are product states and should often have explicit UI representations.
-
-## 8.1 Prefer domain components
-
 Create components around stable product concepts.
 
-Examples:
+Examples across different domains:
 
 ```text
 ScannerViewfinder
 RecognitionConfidence
-StorageLocation
-PickTask
-MoveConfirmation
+CheckoutPaymentSheet
+InboxThread
+RidePickupSelector
 ThermostatDial
 ```
 
-Avoid building a generic internal component framework before these product concepts are understood.
+Prefer domain components over speculative wrappers such as `FancyCard`, `UniversalPanel`, or `MagicContainer` unless actual reuse demonstrates that a generic abstraction is valuable.
+
+Domain-driven does not mean custom-build every control. Settings, forms, and conventional workflows should still use appropriate platform controls or focused libraries when those are the better fit.
 
 ---
 
-# 9. Native Controls
+# 10. Native Controls
 
 Use existing native controls when they are good enough.
 
@@ -503,8 +432,6 @@ Do not recreate platform controls merely for visual consistency.
 
 It should not automatically become the application's main component system.
 
-Use custom React Native UI where product identity or domain interaction requires it.
-
 A useful rule is:
 
 ```text
@@ -517,7 +444,7 @@ interaction is product-specific
 
 ---
 
-# 10. Build Vertical Slices
+# 11. Build Vertical Slices
 
 Development should proceed through vertical slices rather than horizontal infrastructure projects.
 
@@ -560,69 +487,54 @@ Open scanner
 → confirm item
 ```
 
-That is a useful vertical slice.
+Another example:
 
-"Build scanner architecture" is not.
+```text
+Open checkout
+→ choose payment method
+→ confirm payment
+→ show receipt
+```
 
-## 10.1 Slice boundaries
-
-A good first slice may use:
-
-- local state;
-- mocked or local data;
-- one route;
-- one service function;
-- minimal styling;
-- minimal tests.
+A good first slice may use local state, mocked data, one route, one service function, minimal styling, and minimal tests.
 
 It should still exercise the real interaction shape of the product.
 
-## 10.2 Expand from working seams
+Once a slice works, replace mocks and local assumptions at the seams rather than rebuilding everything from scratch.
 
-Once a slice works, replace mocks or local assumptions at the seams:
-
-```text
-mock data → API
-local state → shared state only if necessary
-simple visual → refined visual
-manual verification → deterministic test where valuable
-```
-
-Do not rebuild the slice from scratch merely because the architecture becomes more sophisticated.
+Use `guides/vertical-slice-checklist.md` as a compact completion checklist.
 
 ---
 
-# 11. Development Phases
+# 12. Development Phases
 
-These phases are guidance, not bureaucracy. Small tasks may cross several phases quickly.
+These phases are guidance, not bureaucracy. Small tasks may cross several quickly.
 
 ## Phase 0 - Walking Skeleton
 
-Goal: the project runs.
+Goal: the project runs in the correct runtime.
 
 Requirements:
 
 ```text
 Expo project exists
-TypeScript works
+strict TypeScript works
 application starts
 routing works
 one screen renders
-iOS simulator runs
-Android emulator runs when the product targets Android
+iOS simulator runs when iOS is targeted
+Android emulator runs when Android is targeted
 ```
+
+Choose Expo Go only if the current native capability set permits it. Otherwise use a development build.
 
 Do not optimize visual design at this stage.
 
 ## Phase 1 - First Vertical Slice
 
-Implement one meaningful user workflow.
-
-The workflow should include real interaction rather than static mock screens.
+Implement one meaningful user workflow with real interaction rather than static mock screens.
 
 Use local state and mocked data when necessary.
-
-Do not introduce global state management simply because the future application may need it.
 
 At the end of this phase, a user should be able to perform one real task.
 
@@ -630,16 +542,18 @@ At the end of this phase, a user should be able to perform one real task.
 
 Before increasing visual sophistication, make the slice reliable.
 
-Check:
+Check relevant states:
 
 ```text
-main action works
-disabled state works
-failure state exists
-loading state exists when relevant
-empty state exists when relevant
-back navigation works
-screen survives repeated interaction
+main action
+disabled
+loading
+empty
+permission denied
+failure
+retry
+back navigation
+repeated interaction
 ```
 
 Run TypeScript checks and relevant tests.
@@ -648,11 +562,9 @@ Run the application.
 
 Do not rely solely on static code inspection.
 
-## Phase 3 - Platform Feedback
+## Phase 3 - Platform Behavior
 
-Add platform behaviors that improve understanding.
-
-Examples:
+Add platform behaviors that improve understanding and usability:
 
 ```text
 haptics
@@ -664,90 +576,52 @@ native sheets
 native controls
 ```
 
-Haptics should communicate meaningful events.
-
-Good examples:
-
-```text
-successful scan
-selection changed
-critical confirmation
-operation failed
-```
-
-Do not add haptics as decoration.
+Haptics should communicate meaningful events, not decorate every tap.
 
 ## Phase 4 - Product UI
 
 Only after the workflow behaves correctly should significant visual refinement begin.
 
-Improve:
-
-```text
-hierarchy
-spacing
-typography
-states
-motion
-touch targets
-contrast
-domain-specific components
-```
+Improve hierarchy, spacing, typography, states, touch targets, contrast, motion, and domain-specific components.
 
 This is where the application's visual language starts to emerge.
-
-Extract reusable components when reuse is demonstrated.
-
-Do not create a generic design system merely to satisfy architectural aesthetics.
 
 ## Phase 5 - Motion and Gestures
 
 Prefer built-in interactions first.
 
-Use `Pressable`, scrolling, native gestures, or simple state transitions where sufficient.
+Introduce React Native Gesture Handler when gesture complexity justifies it.
 
-Introduce React Native Gesture Handler when interaction complexity justifies it.
-
-Introduce Reanimated when motion requires:
-
-- gesture-linked animation;
-- continuous high-performance animation;
-- complex transitions;
-- animation on the UI thread;
-- sophisticated shared-value behavior.
+Introduce Reanimated when motion requires gesture-linked animation, high-frequency UI-thread execution, complex transitions, or coordinated shared values.
 
 Do not use Reanimated for every opacity change.
 
-Motion must communicate state, causality, continuity, or spatial relationships.
+Motion must explain state, causality, continuity, or spatial relationships.
 
 ## Phase 6 - Scale and Hardening
 
-Only after meaningful product behavior exists should the application be optimized for broader scale.
-
-Potential concerns include:
+Only after meaningful product behavior exists should the application add capabilities such as:
 
 - offline behavior;
 - cache policy;
 - background processing;
 - observability;
 - performance profiling;
-- large data sets;
 - feature flags;
 - production error recovery;
 - advanced accessibility;
-- tablet or orientation layouts;
+- tablet/orientation layouts;
 - localization;
-- visual regression testing.
+- visual regression testing;
+- release automation.
 
 Add each capability in response to product needs.
 
 ---
 
-# 12. State Management
+# 13. State Management and Server State
 
-Start with React state.
-
-Use:
+Start with React state:
 
 ```text
 useState
@@ -755,25 +629,11 @@ useReducer
 Context
 ```
 
-where appropriate.
-
-Introduce an external state-management library only when state complexity clearly exceeds these tools.
-
-Typical signs include:
-
-- many distant components need to mutate the same state;
-- state transitions are difficult to reason about locally;
-- persistent global state has become a real product concept;
-- Context usage causes excessive coupling or churn;
-- workflow state deserves an explicit model.
-
-Do not install Redux, Zustand, Jotai, or another state library simply because the application is non-trivial.
-
-## 12.1 Server state is different
+Introduce an external state library only when state complexity clearly exceeds these tools.
 
 Server state and application state are different problems.
 
-A server-state library such as TanStack Query becomes valuable when the application genuinely needs:
+A server-state library such as TanStack Query becomes valuable when the application genuinely needs several of:
 
 ```text
 request caching
@@ -783,45 +643,40 @@ retry policies
 pagination
 optimistic mutation
 cache invalidation
+multiple consumers of the same remote data
 ```
 
 Do not install it merely because the application calls an API.
 
 ---
 
-# 13. Data and Services
+# 14. Data, Forms, and Services
 
-Keep API and platform interaction behind clear seams when doing so improves testability or readability.
+Keep API and platform interaction behind clear seams when doing so improves readability or testability.
 
 Avoid creating a universal service architecture before multiple services exist.
 
-Good early structure may be as small as:
-
-```text
-services/
-  items.ts
-  scanner.ts
-```
-
-A service should express domain intent where possible.
-
-Prefer:
+Prefer domain intent such as:
 
 ```ts
 resolveScannedItem(code)
 ```
 
-over low-level request details leaking throughout screens.
+over leaking low-level request details throughout screens.
 
-Do not bury simple one-off calls under many layers solely to satisfy a pattern.
+For forms, start with native inputs and local state when the form is small.
+
+Introduce a form/validation library when repeated field orchestration, complex validation, nested structures, performance, or reusable schemas create real friction.
+
+Do not choose a form library globally merely because the application has forms.
 
 ---
 
-# 14. Error, Loading, Empty, and Uncertain States
+# 15. Error, Empty, Uncertain, and Recovery States
 
 A modern mobile UI is not just the success screenshot.
 
-For each meaningful flow, consider:
+For each meaningful flow, deliberately consider the states that can realistically occur:
 
 ```text
 loading
@@ -836,62 +691,25 @@ retrying
 success
 ```
 
-Not every screen needs every state.
-
-But any state that can realistically occur should be considered deliberately.
-
 For AI or recognition workflows, uncertainty should be visible rather than disguised as certainty.
+
+At an appropriate application boundary, provide a way to contain unexpected render/runtime failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling.
 
 ---
 
-# 15. Accessibility
+# 16. Accessibility
 
 Accessibility is part of component correctness.
 
-Interactive custom controls should define appropriate:
-
-```text
-accessibilityLabel
-accessibilityRole
-accessibilityState
-accessibilityHint
-```
-
-where useful.
+Interactive custom controls should define appropriate accessibility labels, roles, states, and hints where useful.
 
 Touch targets must be large enough for reliable use.
 
 Important information should not depend exclusively on color.
 
-Custom controls should provide alternate ways to perform precision interactions when appropriate.
+Custom precision interactions should provide an accessible alternative when appropriate.
 
-Example:
-
-A rotary temperature control may support dragging but should also provide accessible increment/decrement actions.
-
-Consider dynamic text sizing, screen readers, focus order, reduced motion, and contrast when they are relevant to the product audience.
-
----
-
-# 16. Motion and Haptics
-
-Motion is product communication, not decoration.
-
-Good motion can explain:
-
-- what changed;
-- where an object moved;
-- whether an action succeeded;
-- which element has focus;
-- how one screen relates to another.
-
-Avoid adding animation because the interface feels "too static".
-
-Haptics should correspond to meaningful interaction events.
-
-Use them sparingly enough that each signal retains meaning.
-
-Respect reduced-motion or platform accessibility settings where applicable.
+Consider dynamic text sizing, screen readers, focus order, reduced motion, and contrast when relevant to the product audience.
 
 ---
 
@@ -899,32 +717,11 @@ Respect reduced-motion or platform accessibility settings where applicable.
 
 Storybook is optional at the beginning.
 
-Introduce it when at least one of the following becomes true:
+Introduce it when components have several meaningful states, are reused across screens, visual iteration in full flows becomes slow, agents frequently modify shared components, or a real design system is emerging.
 
-- components have several meaningful states;
-- components are reused across several screens;
-- UI regression becomes difficult to inspect inside full workflows;
-- agents frequently modify shared components;
-- a product design system has started to emerge.
+Useful stories represent product states rather than decorative permutations.
 
-Useful stories should show states rather than decorative variants.
-
-Example:
-
-```text
-ScannerViewfinder
-
-idle
-detecting
-recognized
-uncertain
-permission-denied
-error
-```
-
-Storybook is a component workbench.
-
-It is not a replacement for testing the real application.
+Storybook is a component workbench. It is not a replacement for testing the real application.
 
 ---
 
@@ -934,83 +731,48 @@ Testing should grow with product risk.
 
 Do not create hundreds of tests before product behavior exists.
 
-At minimum, protect critical behavior.
-
 ## 18.1 Unit tests
 
-Use unit tests for deterministic domain logic that has meaningful branching or edge cases.
-
-Examples:
-
-- parsing;
-- calculations;
-- reducers;
-- state machines;
-- validation;
-- data transformations.
-
-Do not test trivial implementation details merely to increase coverage.
+Use unit tests for deterministic domain logic with meaningful branching or edge cases.
 
 ## 18.2 Component tests
 
-Add component tests when interactions or state behavior are valuable to protect without running full E2E flows.
+Use React Native Testing Library or another project-adopted user-oriented component-testing approach when component interaction/state behavior is valuable to protect without full E2E execution.
 
-Prefer testing user-observable behavior over internal implementation details.
+Test user-observable behavior rather than implementation details.
+
+Do not require component tests for every trivial wrapper.
 
 ## 18.3 End-to-end tests
 
-For end-to-end mobile flows, Maestro is the default candidate when deterministic E2E coverage is justified.
+Maestro is the default candidate when deterministic mobile E2E coverage is justified.
 
-Good Maestro flows include:
+Prioritize critical user journeys rather than every screen.
 
-```text
-launch app
-navigate to core feature
-perform primary action
-verify result
-```
-
-Focus first on critical user journeys rather than every screen.
-
-Do not attempt to encode all visual nuance into E2E assertions.
+Reference: https://docs.maestro.dev/
 
 ---
 
-# 19. Agent-Device and Device-Driven Verification
+# 19. Device-Driven Verification
 
-Agent-device is a visual and behavioral inspection tool.
+A coding agent should see the application it modifies whenever practical.
 
-Use it after a runnable UI exists.
+Use agent-device or equivalent tooling after runnable UI exists for exploratory interaction, accessibility-tree inspection, screenshots, and visual/behavioral verification.
 
-It is especially useful for:
+Reference: https://github.com/callstack/agent-device
 
-```text
-opening the application
-navigating flows
-tapping controls
-reading the accessibility tree
-taking screenshots
-discovering unexpected UI problems
-checking whether an implementation matches intent
-```
+Use deterministic E2E tests for known regression-critical behavior.
 
-Do not use agent-device as a replacement for deterministic tests.
-
-Use:
+A useful relationship is:
 
 ```text
-Maestro
+Maestro = deterministic critical journeys
+agent-device = exploratory and visual verification
 ```
 
-for known critical behavior.
+Deeper tooling such as Argent may be introduced when debugging requires richer component-tree inspection, network diagnostics, visual regression, replay, or performance profiling.
 
-Use:
-
-```text
-agent-device
-```
-
-for exploratory, visual, and agent-driven verification.
+Reference: https://github.com/software-mansion/argent
 
 A useful development loop is:
 
@@ -1023,75 +785,22 @@ interact
 ↓
 inspect
 ↓
-capture screenshot when useful
-↓
-compare against intended behavior
+capture evidence when useful
 ↓
 adjust
-```
-
-Agents should see the application they modify whenever practical.
-
-Deeper device tooling such as Argent may be introduced when debugging requires richer React Native introspection, network inspection, performance profiling, or platform tooling.
-
----
-
-# 20. Visual Verification
-
-For meaningful UI changes, source-code inspection alone is insufficient.
-
-At minimum:
-
-```text
-run the screen
-interact with it
-inspect the result
-```
-
-For substantial product UI work:
-
-```text
-run simulator/device
-capture screenshots when useful
-inspect multiple states
-verify touch interaction
-verify text does not clip
-verify safe areas
-verify keyboard behavior
-verify light/dark or orientation behavior when supported
 ```
 
 Do not declare a visual task complete merely because TypeScript compiles.
 
 ---
 
-# 21. Figma and Design Inputs
+# 20. Figma and Design Inputs
 
 Figma is a design source, not executable truth.
 
 Figma MCP may be used when structured design context materially improves implementation.
 
-Agents may read:
-
-```text
-layout
-components
-variables
-design tokens
-spacing
-typography
-```
-
-from Figma.
-
-Generated code must still be reviewed against:
-
-```text
-platform behavior
-accessibility
-domain behavior
-actual running UI
-```
+Generated code must still be reviewed against platform behavior, accessibility, domain behavior, and the actual running UI.
 
 Do not treat Figma-to-code as a compiler.
 
@@ -1099,144 +808,134 @@ If no Figma design exists, do not block implementation. Product principles, doma
 
 ---
 
-# 22. Expo Skills and Agent Instructions
+# 21. Images, Lists, and Performance
 
-When available, agents should use official Expo skills and current Expo documentation for Expo-specific guidance.
+Do not optimize imagined performance problems. Measure first.
 
-Relevant skill areas may include:
+Use normal React Native list primitives until evidence shows they are insufficient for the product's data volume or interaction profile. If list performance becomes a user-visible problem, profile and evaluate focused alternatives based on measured behavior.
 
-```text
-project structure
-Expo Router
-animation
-native UI
-design systems
-data fetching
-Expo modules
-SDK upgrades
-```
+Use the simplest image primitive that satisfies the feature. `expo-image` is a strong option when remote-image caching, transitions, placeholders, or richer image behavior provide value. A few simple local assets do not require image infrastructure.
+
+Pay attention when the product contains large lists, continuous camera processing, heavy image rendering, complex gestures, maps, frequent animation, or expensive state propagation.
+
+Do not memoize every component or callback by habit.
+
+---
+
+# 22. Security, Permissions, and Sensitive Data
+
+Request permissions when the related feature is about to be used or when the flow clearly explains why permission is needed.
+
+Handle denied and restricted states deliberately.
+
+Avoid collecting or storing sensitive data unless required.
+
+Use secure platform storage for credentials or sensitive secrets where appropriate.
+
+Never log secrets, tokens, or personal data unnecessarily.
+
+Validate incoming deep-link data before treating it as trusted navigation or command input.
+
+Treat WebView content and bridge messages as trust boundaries. Minimize exposed capabilities and validate messages.
+
+For products with meaningful security risk, use OWASP MASVS as a reference rather than attempting to invent a complete mobile security standard inside this playbook: https://mas.owasp.org/MASVS/
+
+---
+
+# 23. Offline and Network Behavior
+
+Do not claim offline support unless the product has an explicit offline model.
+
+When offline behavior matters, define what is cached, what may be stale, which mutations can queue, how conflicts are resolved, and how synchronization state is communicated.
+
+A network error screen is not an offline architecture.
+
+Introduce persistence and synchronization tools only after this behavior is defined.
+
+---
+
+# 24. Observability and Release
+
+Do not install a large observability stack before there is production behavior to observe.
+
+As the product matures, consider crash reporting, structured errors, important workflow events, performance traces, and release/build identification.
+
+When repeatable team or production builds become necessary, establish a reproducible build/release path.
+
+EAS Build, EAS Update, EAS Submit, and EAS Workflows are natural Expo-integrated options, but they are not mandatory if the project has another deliberate delivery system.
+
+Choose release infrastructure in response to distribution, signing, CI, rollback, and team needs.
+
+---
+
+# 25. Expo Skills and Agent Instructions
+
+When available, agents should use official Expo skills and current Expo documentation for version-sensitive guidance.
 
 Project-specific rules override generic examples.
 
-Each serious application should eventually define its own domain instructions describing:
-
-```text
-important entities
-core workflows
-interaction principles
-critical states
-error behavior
-domain terminology
-motion semantics
-accessibility expectations
-```
+Each serious application should eventually define local domain instructions describing important entities, core workflows, interaction principles, critical states, error behavior, terminology, motion semantics, and accessibility expectations.
 
 The agent should understand the product, not only React Native.
 
 ---
 
-# 23. Codex Operating Rules
+# 26. Agent Operating Rules
 
-## Before implementation
+Before implementation:
 
-Read:
+- read repository instructions and project documentation;
+- inspect existing code and dependencies;
+- determine the smallest vertical slice that satisfies the task;
+- use current official documentation for version-sensitive Expo/RN behavior.
 
-```text
-AGENTS.md
-this playbook
-project-specific documentation
-existing code
-```
+During implementation:
 
-Determine the smallest vertical slice that satisfies the task.
+- prefer existing platform capabilities;
+- avoid adding dependencies unless required;
+- keep abstractions proportional to actual complexity;
+- run the application early;
+- keep changes scoped to the task.
 
-Inspect existing dependencies before proposing new ones.
+After implementation:
 
-Use current official documentation for version-sensitive Expo or React Native behavior.
+- run relevant checks;
+- open the application in the correct runtime;
+- exercise the changed flow;
+- inspect the rendered UI;
+- verify relevant failure/permission states;
+- only then refine visual details or introduce additional abstraction.
 
-## During implementation
-
-Prefer existing platform capabilities.
-
-Avoid adding dependencies unless required.
-
-Keep abstractions proportional to actual complexity.
-
-Run the application early.
-
-Do not build large amounts of infrastructure before validating the workflow.
-
-Keep changes scoped to the task unless adjacent changes are necessary for correctness.
-
-## After implementation
-
-Run relevant checks.
-
-Open the application.
-
-Exercise the changed flow.
-
-Inspect the rendered UI.
-
-For significant UI work, inspect actual simulator or device output.
-
-Only then refine visual details or introduce additional abstraction.
+For agent-specific traps, read `guides/agent-failure-modes.md`.
 
 ---
 
-# 24. Escalation Rule
-
-Architecture should become more sophisticated only when the current architecture produces identifiable friction.
-
-The default decision sequence is:
-
-```text
-Can React Native solve it?
-        ↓ no
-Can Expo solve it?
-        ↓ no
-Can a small local abstraction solve it?
-        ↓ no
-Can a focused library solve it?
-        ↓ no
-Do we need a larger framework or native implementation?
-```
-
-Move downward only when necessary.
-
-See `guides/decision-ladder.md` for specific tools.
-
----
-
-# 25. Architecture Decision Rule
+# 27. Architecture Decision Rule
 
 Any significant new framework or cross-cutting dependency should have a short justification.
 
 At minimum answer:
 
 ```text
-Why are we adding this?
-
 What problem exists today?
-
-Why are existing tools insufficient?
-
-What new constraints does this dependency introduce?
-
-How difficult would it be to remove later?
+Why are current tools insufficient?
+What are we adding?
+Why is it the smallest appropriate solution?
+What costs does it introduce?
+What is the exit path?
 ```
 
-This does not require bureaucracy.
+A short ADR, issue, or pull request note is enough.
 
-A short ADR or pull-request note is enough.
-
-The objective is to prevent accidental architectural drift.
+The objective is clarity, not process overhead.
 
 ---
 
-# 26. Suggested Project Shape
+# 28. Suggested Project Shape
 
-Do not treat this as mandatory structure. It is a reasonable starting point for a small-to-medium Expo application.
+Do not treat this as mandatory structure.
+
+A small-to-medium Expo app may begin with:
 
 ```text
 app/
@@ -1250,130 +949,43 @@ src/
   types/
 ```
 
-As the application becomes domain-heavy, feature-oriented structure may become preferable:
+As the application becomes domain-heavy, feature-oriented structure may become preferable.
 
-```text
-src/
-  features/
-    scanning/
-    inventory/
-    moves/
-  shared/
-  theme/
-```
+Do not reorganize repeatedly for aesthetic reasons. Let actual domain boundaries drive structure.
 
-Do not reorganize repeatedly for aesthetic reasons.
-
-Let actual domain boundaries drive structure.
+Avoid barrel files by default. Add them when they express a useful public module boundary, not merely to shorten imports.
 
 ---
 
-# 27. Performance
+# 29. Definition of Done for a Vertical Slice
 
-Do not optimize imagined performance problems.
-
-First measure.
-
-Pay attention when the product contains:
-
-- large lists;
-- continuous camera processing;
-- heavy image rendering;
-- complex gestures;
-- frequent animation;
-- maps;
-- expensive state propagation;
-- large JSON transformations;
-- native bridges or custom modules.
-
-Use profiling tools when a real problem appears.
-
-Do not memoize every component or callback by habit.
-
-Do not introduce Skia, worklets, custom native code, or elaborate caching without measured need.
-
----
-
-# 28. Offline and Network Behavior
-
-Do not claim offline support unless the product has an explicit offline model.
-
-When offline behavior matters, define:
-
-- what data is cached;
-- what data may be stale;
-- which mutations can queue;
-- how conflicts are resolved;
-- what the user sees while offline;
-- how synchronization status is communicated.
-
-A network error screen is not an offline architecture.
-
-Introduce persistence and synchronization tools only after this behavior is defined.
-
----
-
-# 29. Permissions and Privacy
-
-Request permissions only when the related feature is about to be used or when the product flow clearly explains why permission is needed.
-
-Handle denied and restricted states deliberately.
-
-Avoid collecting or storing sensitive data unless required.
-
-Use secure platform storage for secrets or sensitive credentials where appropriate.
-
-Never log secrets, tokens, or personal data unnecessarily.
-
----
-
-# 30. Observability
-
-Do not install a large observability stack before the application has production behavior to observe.
-
-As the product matures, consider:
-
-- crash reporting;
-- structured application errors;
-- important workflow events;
-- performance traces;
-- release/build identification.
-
-Prefer observability that helps answer real operational questions.
-
-Do not turn analytics into a substitute for product thinking.
-
----
-
-# 31. Definition of Done for a Vertical Slice
-
-A feature slice is not complete merely because the code exists.
+A feature slice is not complete merely because code exists.
 
 At minimum:
 
-- the application boots;
+- the application boots in the correct runtime;
 - the flow can be reached;
 - the primary action works;
 - the expected result is visible;
-- important failure states are handled;
-- TypeScript checks pass;
-- interactive custom controls have basic accessibility;
+- important failure/permission states are handled;
+- strict TypeScript and relevant checks pass;
+- custom interactive controls have basic accessibility;
 - unnecessary dependencies were not introduced;
 - the actual running UI has been inspected.
 
-For critical production flows, also add deterministic E2E coverage.
+For critical production flows, add deterministic E2E coverage.
 
-For important visual flows, also perform agent-device or equivalent visual verification.
+For important visual flows, perform device or simulator visual verification.
 
-For reusable components with many states, consider Storybook.
+For reusable components with many meaningful states, consider Storybook.
+
+See `guides/vertical-slice-checklist.md`.
 
 ---
 
-# 32. Anti-Patterns
+# 30. Anti-Patterns
 
-Avoid these defaults:
-
-## Architecture-first development
+## Premature architecture
 
 Building large layers before a real workflow exists.
 
@@ -1381,13 +993,21 @@ Building large layers before a real workflow exists.
 
 Installing libraries before identifying problems.
 
+## Installed-means-adopted
+
+Using a package simply because it appears in the dependency tree.
+
+## Web-habit leakage
+
+Generating DOM elements, browser CSS, browser storage, or web navigation patterns in native application code without a deliberate cross-platform reason.
+
 ## Generic component obsession
 
-Creating reusable components before there is actual reuse.
+Creating reusable abstractions before there is actual reuse.
 
 ## Screenshot-driven completion
 
-Polishing a static happy-state screen while loading, failure, permissions, and interaction remain broken.
+Polishing a static happy state while loading, failure, permissions, and interaction remain broken.
 
 ## AI-generated UI drift
 
@@ -1399,7 +1019,7 @@ Treating generated design-to-code output as production implementation without ru
 
 ## Test-count optimization
 
-Writing low-value tests to increase coverage metrics while critical workflows remain unprotected.
+Writing low-value tests to increase coverage while critical workflows remain unprotected.
 
 ## Premature performance engineering
 
@@ -1407,11 +1027,15 @@ Adding memoization, custom rendering, or native code without evidence of a bottl
 
 ## Framework-shaped domain
 
-Changing product concepts to match the architecture of a library.
+Changing product concepts to match a library's architecture.
+
+## Expo-Go-only verification
+
+Declaring native functionality correct because JavaScript renders in Expo Go when the feature actually depends on native configuration or a development build.
 
 ---
 
-# 33. Final Principle
+# 31. Final Principle
 
 Do not optimize for having the most sophisticated React Native architecture.
 
