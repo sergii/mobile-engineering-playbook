@@ -14,7 +14,7 @@ Load shared guidance only when relevant:
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - adding/adopting a dependency → `guides/decision-ladder.md`
 - suspicious generated/overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth routing, storage, safe areas, keyboard, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful slice → `guides/vertical-slice-checklist.md`
 - explicitly selected archetype → read it only for relevant tasks
 
@@ -27,8 +27,10 @@ Default behavior:
 - start with `StyleSheet` and strict TypeScript;
 - add dependencies only when they solve demonstrated problems;
 - determine CNG/native-project ownership before editing generated native files;
-- keep auth/session concerns separated rather than creating a global persisted auth store by habit;
+- keep auth identity, credential storage, route protection, server authorization, profile data, and app state separate;
+- never treat client route protection as backend authorization;
 - prefer declarative Expo Router route protection;
-- verify meaningful UI/native behavior in the running mobile runtime.
+- verify meaningful UI/native behavior in the running mobile runtime;
+- verify interruption/restart behavior when the workflow depends on it.
 
 Keep product-specific domain rules local to the product repository instead of duplicating the shared playbook here.
