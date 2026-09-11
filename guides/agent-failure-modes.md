@@ -1,6 +1,6 @@
 # Agent Failure Modes
 
-AI coding agents are useful React Native contributors, but they often import assumptions from web development, starter kits, or package names they discover in the dependency tree.
+AI coding agents are useful React Native contributors, but they often import assumptions from web development, starter kits, package names, or generated native files.
 
 This guide records failure modes that should be treated as explicit guardrails.
 
@@ -257,12 +257,101 @@ They should be added after the first working interaction, before the feature is 
 
 ---
 
+## 16. Editing generated native projects under CNG
+
+### Failure
+
+The project uses Expo Continuous Native Generation, but the agent fixes a native configuration problem by directly editing generated files such as:
+
+```text
+ios/Podfile
+ios/.../Info.plist
+android/build.gradle
+android/app/src/main/AndroidManifest.xml
+```
+
+The change works until `npx expo prebuild --clean` regenerates the native projects and deletes it.
+
+### Rule
+
+First determine who owns the native projects.
+
+If the project is CNG-owned, persistent native configuration belongs in `app.json` / `app.config.ts`, a config plugin, or an appropriate Expo module. Treat `ios/` and `android/` as generated output.
+
+Temporary native edits are acceptable for debugging only when the successful change is moved back into reproducible configuration before completion.
+
+If the repository explicitly owns and maintains native projects instead of using CNG, direct native edits are valid.
+
+See `guides/platform-native-rules.md`.
+
+---
+
+## 17. Imperative authentication redirects
+
+### Failure
+
+The agent implements route protection primarily through screen effects such as:
+
+```tsx
+useEffect(() => {
+  if (!session) {
+    router.replace('/sign-in');
+  }
+}, [session]);
+```
+
+This can create duplicated auth logic, transient protected-screen rendering, or difficult navigation behavior.
+
+### Rule
+
+For current Expo Router applications, prefer declarative Protected Routes for route-level authentication and authorization.
+
+Use imperative redirects only when the product actually needs an imperative transition rather than a route guard.
+
+Reference: https://docs.expo.dev/router/advanced/authentication/
+
+---
+
+## 18. Blind safe-area wrappers
+
+### Failure
+
+The agent wraps every route in `SafeAreaView` without understanding navigator insets, producing double padding or inconsistent edge-to-edge layouts.
+
+### Rule
+
+Use `react-native-safe-area-context` as the source of safe-area information when the screen owns an inset.
+
+Determine which edges are already handled by navigation/layout infrastructure and apply only the remaining edges.
+
+Treat edge-to-edge as a platform layout concern, not a special-case patch.
+
+---
+
+## 19. Keyboard-unverified forms
+
+### Failure
+
+The agent verifies a form only with the keyboard closed, leaving focused inputs or primary actions hidden behind the keyboard.
+
+### Rule
+
+Exercise text-entry flows with the keyboard open on each targeted platform.
+
+Start with React Native keyboard primitives. Introduce advanced keyboard infrastructure only when real interaction complexity requires it.
+
+Reference: https://docs.expo.dev/guides/keyboard-handling/
+
+---
+
 # Recovery sequence
 
-When an agent-generated implementation feels overbuilt or web-shaped, recover in this order:
+When an agent-generated implementation feels overbuilt, web-shaped, or platform-fragile, recover in this order:
 
 ```text
 identify the actual user goal
+    ↓
+identify the native ownership/runtime model
     ↓
 remove speculative architecture
     ↓
@@ -272,9 +361,9 @@ make one vertical slice work
     ↓
 run it on the correct runtime
     ↓
-verify behavior
+verify platform behavior
     ↓
-reintroduce only the abstractions that now solve demonstrated problems
+reintroduce only abstractions that solve demonstrated problems
 ```
 
 Complexity must be earned.
