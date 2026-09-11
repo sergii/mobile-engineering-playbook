@@ -3,7 +3,10 @@
 Use the Mobile Engineering Playbook as the shared React Native / Expo engineering baseline.
 
 Playbook repository: https://github.com/sergii/mobile-engineering-playbook
-Playbook revision: v0.4.2
+Playbook version: v0.4.2
+Playbook revision: 20b7e097bf9b7d8333f2c3ac780be4198fedcdb1
+
+The exact revision is the reproducible baseline. The version is the human-readable release label.
 
 Do not silently follow a newer `main` revision. Upgrade the product's adopted playbook baseline deliberately after reviewing shared-rule changes.
 
@@ -50,7 +53,7 @@ Product-specific documented rules override generic examples in the shared playbo
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - new or cross-cutting dependency → `guides/decision-ladder.md`
 - suspicious generated/overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth routing, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth routing/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
 - explicitly selected product archetype → that archetype's README/YAML/slices when relevant
 
