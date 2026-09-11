@@ -1,7 +1,6 @@
 ---
 description: Shared React Native and Expo mobile engineering baseline
 alwaysApply: true
-globs: "**/*"
 ---
 
 Follow the Mobile Engineering Playbook as the shared baseline:
