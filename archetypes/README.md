@@ -38,6 +38,30 @@ Do not apply an archetype silently because an application looks similar. The pro
 
 Project-specific rules always override archetype guidance.
 
+## Architecture bias semantics
+
+`architecture_bias` values describe **likelihood and relative product pressure** for a class of applications.
+
+They do **not** mean:
+
+- implementation priority;
+- required architecture;
+- required dependency;
+- package installation instruction;
+- a feature that every product of this type must have.
+
+The current scale is:
+
+```text
+low         = uncommon or usually secondary
+low_medium  = sometimes relevant
+medium      = commonly relevant
+medium_high = likely to become important
+high        = central product force for this archetype
+```
+
+Bias values help an agent ask better questions earlier. They must never bypass the normal decision ladder.
+
 ## Current archetypes
 
 - [`camera-operational`](./camera-operational/) - camera-first operational workflows involving physical-world objects, identification, confirmation, and operational state changes.
@@ -56,5 +80,7 @@ A useful archetype should usually include:
 ```
 
 Keep the human explanation in Markdown and the compact machine-readable profile in YAML.
+
+For machine-readable archetypes, either use the scale above or explicitly define another scale and its semantics. Never leave ordinal values ambiguous.
 
 Avoid creating archetypes merely to enumerate app categories.
