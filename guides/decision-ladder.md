@@ -75,6 +75,26 @@ Use Expo Router for real application navigation.
 
 Do not build a long-lived custom router from React state.
 
+## Authentication and authorization
+
+For current Expo Router applications, prefer Protected Routes for route-level authentication and authorization.
+
+Use route groups to organize areas of the application, but let route guards express access rules declaratively.
+
+Do not default to `useEffect` + `router.replace()` as the primary auth-guard mechanism when Protected Routes express the same rule directly.
+
+Imperative redirects remain valid for explicit transitions that are not access guards.
+
+Reference: https://docs.expo.dev/router/advanced/authentication/
+
+## Error boundaries
+
+Expected product states such as validation failures, payment declines, offline state, and empty results belong in normal product UI.
+
+Use Expo Router route/layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
+
+Reference: https://docs.expo.dev/router/error-handling/
+
 ---
 
 # 3. React Native Gesture Handler
@@ -207,7 +227,81 @@ Use straightforward service calls for simple request/response workflows.
 
 ---
 
-# 8. Forms and Validation
+# 8. Local Storage and Persistence
+
+Persistence is not one problem. Choose a storage mechanism based on sensitivity, data shape, access pattern, and offline requirements.
+
+## Sensitive key-value data
+
+Examples:
+
+```text
+authentication token
+refresh token
+small credential material
+sensitive session secret
+```
+
+Prefer `expo-secure-store` when the data is small, sensitive, and belongs in encrypted platform-backed key-value storage.
+
+Do not use SecureStore as the only source of truth for large or irreplaceable application data.
+
+Reference: https://docs.expo.dev/versions/latest/sdk/securestore/
+
+## Small non-sensitive key-value data
+
+Examples:
+
+```text
+hasSeenOnboarding
+selectedTheme
+lastUsedFilter
+small user preference
+```
+
+Default to `@react-native-async-storage/async-storage` when simple asynchronous persistent key-value storage is sufficient.
+
+It is unencrypted. Do not store secrets there.
+
+Reference: https://docs.expo.dev/versions/latest/sdk/async-storage/
+
+## When SQLite is already adopted
+
+If the application already uses `expo-sqlite`, consider `expo-sqlite/kv-store` for simple key-value persistence instead of adding another storage dependency.
+
+Its API is compatible with AsyncStorage-style usage and also exposes synchronous methods.
+
+Reference: https://docs.expo.dev/versions/latest/sdk/sqlite/
+
+## Structured/queryable local data
+
+Consider `expo-sqlite` when the product needs persistent structured data, queries, transactions, or a real local data model.
+
+Do not introduce a database for a handful of preferences.
+
+## Synchronous/high-performance key-value access
+
+Consider a focused solution such as MMKV only when measured startup/access latency, synchronous reads, or a demonstrated performance constraint makes the asynchronous baseline insufficient.
+
+Do not choose it merely because it benchmarks faster.
+
+## Offline synchronization
+
+Do not choose WatermelonDB, PowerSync, or another sync/data framework before defining:
+
+- which data exists offline;
+- ownership/source of truth;
+- staleness policy;
+- queued mutations;
+- conflict resolution;
+- retry semantics;
+- user-visible sync state.
+
+Design the offline model first, then choose the smallest persistence/sync tool that implements it.
+
+---
+
+# 9. Forms and Validation
 
 ## Default
 
@@ -225,7 +319,7 @@ Do not add a form framework simply because a product contains forms.
 
 ---
 
-# 9. Storybook
+# 10. Storybook
 
 ## Default
 
@@ -256,7 +350,7 @@ Do not build stories for every trivial wrapper.
 
 ---
 
-# 10. React Native Testing Library
+# 11. React Native Testing Library
 
 ## Default
 
@@ -273,7 +367,7 @@ Prefer user-observable behavior over internal implementation details.
 
 ---
 
-# 11. Maestro
+# 12. Maestro
 
 ## Default
 
@@ -294,7 +388,7 @@ Reference: https://maestro.mobile.dev/
 
 ---
 
-# 12. agent-device
+# 13. agent-device
 
 ## Default
 
@@ -327,7 +421,7 @@ Reference: https://github.com/callstack/agent-device
 
 ---
 
-# 13. Argent or deeper device tooling
+# 14. Argent or deeper device tooling
 
 ## Default
 
@@ -348,7 +442,7 @@ Reference: https://github.com/software-mansion/argent
 
 ---
 
-# 14. React Native Skia
+# 15. React Native Skia
 
 ## Default
 
@@ -366,7 +460,7 @@ Do not use Skia to draw ordinary buttons, cards, or static icons.
 
 ---
 
-# 15. SVG
+# 16. SVG
 
 ## Default
 
@@ -382,7 +476,7 @@ SVG is often the right middle ground before Skia.
 
 ---
 
-# 16. Images
+# 17. Images
 
 ## Default
 
@@ -399,7 +493,7 @@ Do not adopt a richer image pipeline without a product reason.
 
 ---
 
-# 17. Large Lists
+# 18. Large Lists
 
 ## Default
 
@@ -415,7 +509,7 @@ Do not replace lists based only on a guessed item-count threshold.
 
 ---
 
-# 18. Custom Native Modules
+# 19. Custom Native Modules
 
 ## Default
 
@@ -435,7 +529,35 @@ Prefer Expo Modules API for application-specific native modules when appropriate
 
 ---
 
-# 19. UI Component Libraries
+# 20. CNG / Prebuild and Native Project Ownership
+
+## Default for new Expo projects
+
+Treat Continuous Native Generation as the normal ownership model unless the project explicitly chooses to maintain native projects manually.
+
+## If CNG owns the native projects
+
+- treat `ios/` and `android/` as generated output;
+- express persistent native configuration through app config and config plugins;
+- assume `expo prebuild --clean` can delete manual native edits;
+- migrate successful temporary native debugging changes back into reproducible configuration.
+
+## If the repository explicitly owns native projects
+
+Direct Xcode/Gradle/native-source edits are valid.
+
+Do not run Prebuild in a way that unintentionally overwrites manual native customizations.
+
+Before editing native files, determine the ownership model first.
+
+References:
+
+- https://docs.expo.dev/workflow/continuous-native-generation/
+- https://docs.expo.dev/config-plugins/introduction/
+
+---
+
+# 21. UI Component Libraries
 
 Examples include HeroUI Native, Gluestack, Tamagui, and similar systems.
 
@@ -462,7 +584,7 @@ A UI library should accelerate the product, not reshape it.
 
 ---
 
-# 20. Figma MCP
+# 22. Figma MCP
 
 ## Default
 
@@ -479,7 +601,7 @@ Do not treat Figma MCP as a compiler. Always inspect the running application.
 
 ---
 
-# 21. Analytics and Observability
+# 23. Analytics and Observability
 
 ## Default
 
@@ -504,13 +626,13 @@ Do not collect telemetry without a purpose.
 
 ---
 
-# 22. Offline Persistence
+# 24. Offline Persistence and Sync
 
 ## Default
 
 Online-only behavior is acceptable unless the product requires offline use.
 
-## Add persistence/sync infrastructure only after defining
+## Add offline persistence/sync infrastructure only after defining
 
 - which data must exist offline;
 - staleness rules;
@@ -521,9 +643,11 @@ Online-only behavior is acceptable unless the product requires offline use.
 
 Do not install a database merely because mobile applications sometimes work offline.
 
+Use the Local Storage and Persistence section above to distinguish simple persistence from an actual offline architecture.
+
 ---
 
-# 23. Expo Go vs Development Build
+# 25. Expo Go vs Development Build
 
 ## Default
 
@@ -541,7 +665,34 @@ Once native behavior depends on the development build, do not use Expo Go as pro
 
 ---
 
-# 24. EAS Build / Update / Submit
+# 26. Safe Areas, Edge-to-Edge, and Keyboard Handling
+
+## Default
+
+Treat edge-to-edge layout and system insets as normal mobile layout inputs.
+
+Use `react-native-safe-area-context` when application content must account for safe areas.
+
+Do not blindly add `SafeAreaView` to every route. Determine which insets the navigator/layout already owns and avoid double padding.
+
+## Keyboard
+
+Start with React Native keyboard APIs and `KeyboardAvoidingView` when they are sufficient.
+
+A text-entry flow is not verified until it has been exercised with the keyboard open on each targeted platform.
+
+Consider `react-native-keyboard-controller` when complex scrollable forms, chat/composer interactions, synchronized keyboard animation, or repeated keyboard bugs create demonstrated friction.
+
+Do not install advanced keyboard infrastructure preemptively.
+
+References:
+
+- https://docs.expo.dev/versions/latest/sdk/safe-area-context/
+- https://docs.expo.dev/guides/keyboard-handling/
+
+---
+
+# 27. EAS Build / Update / Submit
 
 ## Default
 
@@ -558,7 +709,7 @@ Local native builds and other CI systems remain valid choices.
 
 ---
 
-# 25. Decision Template
+# 28. Decision Template
 
 For any significant new dependency or framework, write a short note using this structure:
 
@@ -590,7 +741,7 @@ The purpose is clarity, not process overhead.
 
 ---
 
-# 26. Final Rule
+# 29. Final Rule
 
 Use this escalation sequence:
 
