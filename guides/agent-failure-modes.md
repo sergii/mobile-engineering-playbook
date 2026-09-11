@@ -397,6 +397,36 @@ References:
 
 ---
 
+## 23. Developer-local instruction leakage
+
+### Failure
+
+The agent copies instructions from its local/global environment into repository-owned instructions, for example:
+
+- absolute paths in a developer's home directory;
+- personal hooks or notification scripts;
+- local MCP/tool configuration;
+- machine-specific aliases or binaries;
+- user-global agent preferences.
+
+This makes the repository contract depend on one contributor's machine.
+
+### Rule
+
+Keep these scopes separate:
+
+```text
+developer/global agent configuration
+≠ repository engineering contract
+≠ product/domain rules
+```
+
+Do not persist developer-local or machine-specific instructions into `AGENTS.md`, `CLAUDE.md`, repository configuration, or documentation unless the project explicitly adopts them as repository-owned behavior.
+
+If a local workflow is useful to document, express the portable project requirement rather than copying one developer's implementation path.
+
+---
+
 # Recovery sequence
 
 When an agent-generated implementation feels overbuilt, web-shaped, or platform-fragile, recover in this order:

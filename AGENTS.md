@@ -26,6 +26,14 @@ Do **not** silently choose an archetype because a project merely resembles one.
 
 Context budget is also a resource: load guidance because it is relevant, not because it exists.
 
+## Instruction scope
+
+Keep developer/global agent configuration, the repository engineering contract, and product/domain rules separate.
+
+Do not persist developer-local or machine-specific instructions (home-directory paths, personal hooks, local MCP/tool configuration, aliases/binaries, or user-global preferences) into repository instructions, configuration, or documentation unless the project explicitly adopts them as repository-owned behavior.
+
+When documenting a useful local workflow, express the portable project requirement rather than copying one developer's implementation path.
+
 ## Default operating mode
 
 Use the simplest implementation that correctly expresses the current product requirement.

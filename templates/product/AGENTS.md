@@ -50,6 +50,8 @@ android: <command or none>
 
 Product-specific documented rules override generic examples in the shared playbook.
 
+Keep developer/global agent configuration, the repository engineering contract, and product/domain rules separate. Do not persist developer-local paths, personal hooks, local MCP/tool configuration, machine-specific aliases/binaries, or user-global preferences into repository instructions, configuration, or documentation unless the project explicitly adopts them as repository-owned behavior. Document portable project requirements instead of one developer's implementation path.
+
 ## Load shared guidance only when relevant
 
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
