@@ -2,79 +2,62 @@
 
 This repository defines the shared baseline for React Native / Expo mobile engineering.
 
-## Required reading
+## Context loading
 
-Before making implementation or architectural decisions, read:
+Do not load every playbook document for every task. Use the smallest relevant context.
 
-1. `MOBILE_ENGINEERING_PLAYBOOK.md`
-2. `guides/decision-ladder.md`
-3. `guides/agent-failure-modes.md`
-4. `guides/platform-native-rules.md`
-5. the target application's own `AGENTS.md`, README, architecture notes, and domain documentation
-6. any archetype explicitly referenced by the target project or the user
+### Always read
 
-Project-specific documented requirements override this generic playbook.
+1. the target product repository's local agent instructions (`AGENTS.md`, `CLAUDE.md`, Cursor/Copilot rules, or equivalent);
+2. the product/domain documentation directly relevant to the current task.
 
-Do **not** silently choose an archetype just because a project looks similar. Archetypes are optional context, not automatic policy.
+Project-specific documented requirements override generic examples in this playbook.
+
+### Read when needed
+
+- `MOBILE_ENGINEERING_PLAYBOOK.md` - when making architectural decisions, starting a project, or resolving an unfamiliar mobile-engineering question;
+- `guides/decision-ladder.md` - before adding or adopting a cross-cutting dependency or framework;
+- `guides/agent-failure-modes.md` - when generated code looks web-shaped, overbuilt, dependency-heavy, or otherwise suspicious;
+- `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing, storage, safe areas, edge-to-edge behavior, or keyboard behavior;
+- `guides/vertical-slice-checklist.md` - before calling a meaningful feature slice complete;
+- an archetype - only when the product or user explicitly selected it and the current task materially relates to it.
+
+Do **not** silently choose an archetype because a project merely resembles one.
+
+Context budget is also a resource: load guidance because it is relevant, not because it exists.
 
 ## Default operating mode
 
-Use the simplest implementation that correctly expresses the product requirement.
+Use the simplest implementation that correctly expresses the current product requirement.
 
 Start from:
 
 - current stable Expo SDK;
 - the React Native and React versions supported by that Expo SDK;
 - React Native New Architecture as the modern baseline;
-- TypeScript with strict checking;
+- strict TypeScript;
 - Expo Router for real application navigation;
 - React Native primitives;
 - `StyleSheet`;
 - Expo platform APIs where appropriate.
 
-Do not install a UI framework, styling framework, state-management library, animation framework, server-state library, storage framework, or testing framework merely because it is common in modern starter projects.
+Do not install a UI framework, styling framework, state library, animation framework, server-state library, storage framework, auth platform, or testing framework merely because it is common in starter projects.
 
 Every dependency must solve a concrete problem that exists now.
 
 ## Build vertically
 
-Prefer a complete thin user workflow over a broad unfinished architecture.
-
-Good examples:
+Prefer one complete thin user workflow over broad unfinished infrastructure.
 
 ```text
-open checkout
-→ choose delivery
-→ choose payment
-→ confirm order
-→ show receipt
+one user goal
+→ real interaction
+→ state change
+→ visible result
+→ verification
 ```
 
-```text
-open conversation
-→ write reply
-→ send
-→ show delivered state
-```
-
-```text
-select destination
-→ confirm pickup
-→ request ride
-→ show driver-search state
-```
-
-Bad:
-
-```text
-build the complete API layer
-build the complete design system
-build the complete state layer
-```
-
-before a user can complete a useful task.
-
-Use `guides/vertical-slice-checklist.md` when finishing a slice.
+Do not build the complete API layer, design system, state layer, or test architecture before a user can accomplish a useful task.
 
 ## Complexity order
 
@@ -84,80 +67,42 @@ Escalate in this order:
 React Native primitive
 → Expo API
 → small local abstraction
-→ focused library
+→ focused dependency
 → larger framework
 → custom native implementation
 ```
 
-Stop as soon as the problem is solved well enough.
+Stop when the problem is solved well enough.
 
 ## Archetype rule
 
-Archetypes live under `archetypes/` and describe product-class forces, not mandatory architectures.
+Archetypes under `archetypes/` describe recurring product forces, not mandatory architectures.
 
-When an archetype is explicitly selected:
+When one is explicitly selected:
 
-- treat its vocabulary, likely states, and architectural biases as context;
-- still verify each dependency against the actual product;
-- do not copy every component, state, or tool from the archetype;
-- let project-specific rules win when they differ;
-- record meaningful divergence only when it helps future maintainers.
+- use its vocabulary, states, questions, and architectural biases as context;
+- do not interpret bias values as priorities, package requirements, or installation instructions;
+- verify every tool against the actual product;
+- let product-specific rules override archetype guidance.
 
 ## Agent guardrails
 
-AI coding agents commonly import web habits, infer architecture from installed packages, or patch generated native files. Do not do that.
-
-- Do not use DOM elements such as `div`, `span`, or `button` in native application code.
-- Do not introduce CSS or `className` unless the project has explicitly adopted a system that supports them.
-- Do not install NativeWind, Tamagui, Unistyles, or another styling system "for speed" without a documented product need.
-- Do not treat the presence of a direct or transitive package as permission to adopt it in application code.
-- Do not remove packages required by Expo, Expo Router, config plugins, or another adopted tool merely because application code does not import them directly.
-- Do not assume Expo Go is the normal runtime once native libraries or native configuration matter.
-- Do not declare native behavior verified only because TypeScript passes or Metro starts.
-- Do not add browser storage, DOM navigation, or other web-only assumptions to native code without an explicit cross-platform requirement.
-- Do not weaken types to make generated code compile. Avoid `any`; when unavoidable, isolate and justify it.
-- Do not create barrel files by habit. Add them only when they improve a real module boundary.
-- Do not add a dependency before checking whether the project already has an adopted solution for the same problem.
-- Before editing `ios/` or `android/`, determine whether the project uses CNG/Prebuild as the source of truth or explicitly owns native projects.
-- In CNG-owned projects, do not leave persistent fixes only in generated native files. Move them into app config, config plugins, or an appropriate Expo module.
-- Do not implement route-level auth primarily with `useEffect` + `router.replace()` when Expo Router Protected Routes express the access rule declaratively.
-- Do not wrap every route in a safe-area component blindly. Avoid double insets.
+- Do not use DOM elements, browser storage, browser navigation, CSS, or `className` in native code unless the project explicitly adopted a cross-platform system that provides them.
+- Do not add a styling/state/query/auth/storage library "for speed" without a demonstrated product need.
+- Installed or transitive does not mean adopted. Unused direct imports do not prove a package is removable.
+- Keep strict TypeScript. Do not use `any`, unsafe assertions, or ignore directives merely to make generated code compile.
+- Do not create generic wrappers, barrel files, or architecture layers before real repetition or ownership boundaries justify them.
+- Do not treat Expo Go as proof of native behavior once native configuration or native libraries matter.
+- Before editing `ios/` or `android/`, determine whether the project uses CNG/Prebuild as source of truth or explicitly owns native projects.
+- In CNG-owned projects, persistent native changes belong in app config, config plugins, Expo modules, or another reproducible mechanism - not only in generated native files.
+- Prefer Expo Router Protected Routes for route-level access rules instead of scattered `useEffect` + `router.replace()` guards.
+- Use route/layout Error Boundaries for unexpected runtime/render failures, not expected product states.
+- Do not blindly wrap every screen in a safe-area container. Avoid double insets.
 - Do not consider text-entry UI verified until it has been exercised with the keyboard open on targeted platforms.
 
-See `guides/agent-failure-modes.md` and `guides/platform-native-rules.md` for examples and recovery rules.
+## Storage baseline
 
-## Runtime and native ownership
-
-Expo Go is acceptable for early experiments that fit entirely inside its bundled native capabilities.
-
-Move to a development build when native runtime configuration matters, including native libraries, config plugins, app-specific permissions/entitlements, custom native modules, or capabilities not present in Expo Go.
-
-Once the product depends on a development build, verify native features in that development build or a production-like build.
-
-For native project ownership:
-
-```text
-CNG / Prebuild source of truth
-→ ios/ and android/ are generated output
-→ persistent native configuration belongs in app config / config plugins / modules
-
-explicitly owned native projects
-→ direct Xcode / Gradle / native-source edits are valid
-```
-
-EAS is an Expo-integrated build and delivery option, not a mandatory application architecture. Local native builds are valid when they fit the project.
-
-## Navigation rules
-
-- Prefer Expo Router for real application navigation.
-- Prefer Protected Routes for route-level authentication and authorization in current Expo Router projects.
-- Use route groups for organization, not as a substitute for explicit access rules.
-- Use route/layout Error Boundaries for unexpected runtime/render failures.
-- Model expected product states such as validation, offline, empty, denied, or payment failures explicitly in normal UI.
-
-## Storage rules
-
-Choose persistence based on sensitivity and data shape:
+Choose persistence by sensitivity and data shape:
 
 ```text
 small sensitive key-value
@@ -166,63 +111,63 @@ small sensitive key-value
 small non-sensitive key-value
 → AsyncStorage
 
-SQLite already adopted + simple key-value need
+SQLite already adopted + simple key-value
 → consider expo-sqlite/kv-store
 
 structured/queryable local data
 → expo-sqlite when justified
 
-offline sync
-→ define offline model first, then choose sync tooling
+offline synchronization
+→ define the offline model first, then choose sync tooling
 ```
 
-Do not use browser `localStorage` by habit in native code.
+Do not invent a global persisted session store merely because authentication exists.
 
-Do not add a database for a handful of preferences.
+## Auth/session baseline
 
-## UI rules
+Keep these concerns separate:
+
+```text
+authentication identity
+≠ credential/token storage
+≠ route protection
+≠ user profile/server data
+≠ application state
+```
+
+Do not add an auth platform until the product actually has account/identity requirements that justify one.
+
+Use secure platform storage for sensitive client credentials when such credentials must exist on-device. Prefer Expo Router Protected Routes for access control. Do not persist more session state than the product requires.
+
+## UI and platform rules
 
 - Domain components are preferred over speculative generic abstractions.
 - Start with `StyleSheet` and small token files.
-- Extract tokens from repeated decisions, not imagined future requirements.
-- Prefer semantic tokens as the product matures.
-- Use native controls when they are appropriate.
-- Use `@expo/ui` selectively, not as a mandatory application-wide UI system.
-- Add Reanimated or Gesture Handler only when interaction complexity requires them.
-- Motion must explain state, causality, continuity, or spatial relationships.
+- Use native controls when appropriate; use `@expo/ui` selectively.
+- Add Gesture Handler or Reanimated only when interaction complexity requires them.
+- Motion and haptics must communicate meaningful state or causality.
 - Accessibility is part of correctness.
-- Domain-heavy UI examples belong in an archetype or product documentation, not in the universal core.
 - Treat edge-to-edge and safe-area insets as normal platform layout inputs.
 - Use `react-native-safe-area-context` when the application owns an inset; do not double-apply navigator-managed insets.
 
-## TypeScript rules
-
-- Keep `strict` enabled in new projects unless a documented compatibility constraint prevents it.
-- Prefer explicit domain types over broad object shapes.
-- Avoid `any`. If an external boundary forces it, contain the unsafe value at that boundary and convert it to a validated type.
-- Do not use type assertions merely to silence a design or data-model problem.
-
 ## Verification rules
 
-Do not consider a UI task complete because the code compiles.
+A UI/native task is not complete because TypeScript compiles.
 
-For meaningful UI changes:
+For meaningful changes:
 
-1. run the application;
+1. run the application in the correct runtime;
 2. reach the changed flow;
 3. exercise the primary interaction;
 4. inspect the actual rendered result;
-5. verify important states and failure behavior;
-6. if text input exists, exercise the flow with the keyboard open;
-7. verify safe areas/system UI on targeted platforms.
+5. verify realistic loading/error/permission/empty states;
+6. verify keyboard and safe-area behavior when relevant.
 
-Use deterministic tests for deterministic behavior.
+Use Maestro for deterministic critical E2E paths when justified.
 
-Use Maestro for critical end-to-end user journeys when E2E coverage is justified.
+Use agent-device or equivalent tooling for exploratory and visual verification after a runnable UI exists.
 
-Use agent-device or an equivalent device-control tool for exploratory, visual, and agent-driven verification after a runnable UI exists.
-
-Do not use device-driving agents as a substitute for deterministic regression tests.
+Do not use device-driving agents as a substitute for deterministic regression coverage.
 
 ## Dependency rule
 
@@ -234,37 +179,24 @@ Before adding or adopting a dependency, answer:
 4. Can a small local abstraction solve it?
 5. Is there already an adopted solution in this project?
 6. Why is this dependency the smallest appropriate solution?
-7. What runtime, native-build, upgrade, bundle, or maintenance cost does it introduce?
+7. What runtime, native-build, bundle, migration, and maintenance cost does it introduce?
 
-If these questions do not have convincing answers, do not add the dependency.
-
-A package being present transitively is not the same as the project adopting that package's API.
-
-## Change discipline
-
-- Keep changes proportional to the requested task.
-- Do not refactor unrelated code without a clear reason.
-- Do not introduce architecture for hypothetical future requirements.
-- Prefer reversible decisions early.
-- Record significant cross-cutting dependency or framework decisions briefly in an ADR or pull request description.
+If the answers are weak, do not add it.
 
 ## Definition of done
 
-At minimum, a completed vertical slice should:
+At minimum, a meaningful vertical slice should:
 
-- boot successfully in the correct runtime;
-- be reachable through the intended navigation;
+- boot in the correct runtime;
+- be reachable;
 - allow the primary user action;
 - produce a visible expected result;
-- handle important loading, disabled, empty, permission, and failure states where relevant;
+- handle realistic failure/permission/loading states;
 - pass strict TypeScript and relevant checks;
-- provide basic accessibility for custom interactive controls;
+- provide basic accessibility for custom controls;
 - avoid unnecessary dependencies;
-- have been inspected in a running application;
-- have relevant keyboard/safe-area behavior verified.
+- have been exercised in the running app.
 
-For critical flows, add deterministic E2E coverage.
-
-For important visual flows, perform device or simulator visual verification.
+Use `guides/vertical-slice-checklist.md` for the fuller checklist.
 
 Complexity must be earned.
