@@ -4,6 +4,8 @@ Use the Mobile Engineering Playbook as the shared React Native / Expo engineerin
 
 https://github.com/sergii/mobile-engineering-playbook
 
+Resolve the adopted `Playbook revision` from the product repository's local engineering contract. Read shared playbook documents at that revision; do not silently substitute a newer `main` baseline.
+
 Always read the product repository's local instructions and task-relevant domain documentation first.
 
 Load shared guidance only when relevant:
@@ -11,7 +13,7 @@ Load shared guidance only when relevant:
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - adding/adopting a dependency → `guides/decision-ladder.md`
 - suspicious generated or overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, application-lifecycle/interruption behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
 - explicitly selected archetype → read it only when relevant
 
