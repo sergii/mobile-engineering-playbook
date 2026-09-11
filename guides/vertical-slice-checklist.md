@@ -25,9 +25,10 @@ Use this checklist for a meaningful feature slice. Not every item applies to eve
 - [ ] Route-level auth/authorization uses declarative route protection when appropriate.
 - [ ] Protected Routes are not treated as a server-side authorization boundary; protected API operations authenticate and authorize independently on the backend.
 - [ ] Session restoration has an explicit loading/unknown state when required, so protected UI does not flash before auth state is known.
-- [ ] Logout/expired-session behavior removes credentials and invalidates user-scoped data where product security requires it.
+- [ ] Credential refresh/rotation for the same authenticated identity does not accidentally behave like logout.
+- [ ] Logout/account-switch/expired-session behavior removes credentials and invalidates user-scoped data where product security requires it.
 - [ ] Expected product failures are modeled explicitly rather than being delegated to Error Boundaries.
-- [ ] Unexpected React render/lifecycle failures have an appropriate recovery boundary where justified.
+- [ ] Unexpected React render/component-tree failures have an appropriate recovery boundary where justified.
 - [ ] Event-handler and async-operation errors are handled explicitly rather than assumed to be caught by an Error Boundary.
 
 ## Behavior
@@ -52,7 +53,7 @@ Use this checklist for a meaningful feature slice. Not every item applies to eve
 - [ ] Native permissions are requested at an understandable point in the flow.
 - [ ] Haptics, if present, communicate meaningful events.
 
-## Lifecycle and interruption
+## Application lifecycle and interruption
 
 When the feature owns long-lived, persisted, auth-sensitive, payment-sensitive, upload, queue, or mutation state:
 
