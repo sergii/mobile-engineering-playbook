@@ -44,6 +44,8 @@ Context budget is a resource. Do not load every guide for every task.
 
 Copy the relevant adapter into the conventional path used by the target tool, then customize product-specific guidance locally.
 
+Antigravity CLI (`agy`) automatically reads workspace-root `AGENTS.md`, so the generic product template can be used directly; no separate Antigravity adapter is required for the shared baseline.
+
 ## Generic product template
 
 For a new repository that needs a minimal local contract, start from:
