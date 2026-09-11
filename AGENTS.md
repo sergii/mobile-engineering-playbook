@@ -9,8 +9,9 @@ Before making implementation or architectural decisions, read:
 1. `MOBILE_ENGINEERING_PLAYBOOK.md`
 2. `guides/decision-ladder.md`
 3. `guides/agent-failure-modes.md`
-4. the target application's own `AGENTS.md`, README, architecture notes, and domain documentation
-5. any archetype explicitly referenced by the target project or the user
+4. `guides/platform-native-rules.md`
+5. the target application's own `AGENTS.md`, README, architecture notes, and domain documentation
+6. any archetype explicitly referenced by the target project or the user
 
 Project-specific documented requirements override this generic playbook.
 
@@ -31,7 +32,7 @@ Start from:
 - `StyleSheet`;
 - Expo platform APIs where appropriate.
 
-Do not install a UI framework, styling framework, state-management library, animation framework, server-state library, or testing framework merely because it is common in modern starter projects.
+Do not install a UI framework, styling framework, state-management library, animation framework, server-state library, storage framework, or testing framework merely because it is common in modern starter projects.
 
 Every dependency must solve a concrete problem that exists now.
 
@@ -104,7 +105,7 @@ When an archetype is explicitly selected:
 
 ## Agent guardrails
 
-AI coding agents commonly import web habits or infer architecture from installed packages. Do not do that.
+AI coding agents commonly import web habits, infer architecture from installed packages, or patch generated native files. Do not do that.
 
 - Do not use DOM elements such as `div`, `span`, or `button` in native application code.
 - Do not introduce CSS or `className` unless the project has explicitly adopted a system that supports them.
@@ -117,10 +118,15 @@ AI coding agents commonly import web habits or infer architecture from installed
 - Do not weaken types to make generated code compile. Avoid `any`; when unavoidable, isolate and justify it.
 - Do not create barrel files by habit. Add them only when they improve a real module boundary.
 - Do not add a dependency before checking whether the project already has an adopted solution for the same problem.
+- Before editing `ios/` or `android/`, determine whether the project uses CNG/Prebuild as the source of truth or explicitly owns native projects.
+- In CNG-owned projects, do not leave persistent fixes only in generated native files. Move them into app config, config plugins, or an appropriate Expo module.
+- Do not implement route-level auth primarily with `useEffect` + `router.replace()` when Expo Router Protected Routes express the access rule declaratively.
+- Do not wrap every route in a safe-area component blindly. Avoid double insets.
+- Do not consider text-entry UI verified until it has been exercised with the keyboard open on targeted platforms.
 
-See `guides/agent-failure-modes.md` for examples and recovery rules.
+See `guides/agent-failure-modes.md` and `guides/platform-native-rules.md` for examples and recovery rules.
 
-## Runtime rule
+## Runtime and native ownership
 
 Expo Go is acceptable for early experiments that fit entirely inside its bundled native capabilities.
 
@@ -128,7 +134,51 @@ Move to a development build when native runtime configuration matters, including
 
 Once the product depends on a development build, verify native features in that development build or a production-like build.
 
+For native project ownership:
+
+```text
+CNG / Prebuild source of truth
+→ ios/ and android/ are generated output
+→ persistent native configuration belongs in app config / config plugins / modules
+
+explicitly owned native projects
+→ direct Xcode / Gradle / native-source edits are valid
+```
+
 EAS is an Expo-integrated build and delivery option, not a mandatory application architecture. Local native builds are valid when they fit the project.
+
+## Navigation rules
+
+- Prefer Expo Router for real application navigation.
+- Prefer Protected Routes for route-level authentication and authorization in current Expo Router projects.
+- Use route groups for organization, not as a substitute for explicit access rules.
+- Use route/layout Error Boundaries for unexpected runtime/render failures.
+- Model expected product states such as validation, offline, empty, denied, or payment failures explicitly in normal UI.
+
+## Storage rules
+
+Choose persistence based on sensitivity and data shape:
+
+```text
+small sensitive key-value
+→ expo-secure-store
+
+small non-sensitive key-value
+→ AsyncStorage
+
+SQLite already adopted + simple key-value need
+→ consider expo-sqlite/kv-store
+
+structured/queryable local data
+→ expo-sqlite when justified
+
+offline sync
+→ define offline model first, then choose sync tooling
+```
+
+Do not use browser `localStorage` by habit in native code.
+
+Do not add a database for a handful of preferences.
 
 ## UI rules
 
@@ -142,6 +192,8 @@ EAS is an Expo-integrated build and delivery option, not a mandatory application
 - Motion must explain state, causality, continuity, or spatial relationships.
 - Accessibility is part of correctness.
 - Domain-heavy UI examples belong in an archetype or product documentation, not in the universal core.
+- Treat edge-to-edge and safe-area insets as normal platform layout inputs.
+- Use `react-native-safe-area-context` when the application owns an inset; do not double-apply navigator-managed insets.
 
 ## TypeScript rules
 
@@ -160,7 +212,9 @@ For meaningful UI changes:
 2. reach the changed flow;
 3. exercise the primary interaction;
 4. inspect the actual rendered result;
-5. verify important states and failure behavior.
+5. verify important states and failure behavior;
+6. if text input exists, exercise the flow with the keyboard open;
+7. verify safe areas/system UI on targeted platforms.
 
 Use deterministic tests for deterministic behavior.
 
@@ -206,7 +260,8 @@ At minimum, a completed vertical slice should:
 - pass strict TypeScript and relevant checks;
 - provide basic accessibility for custom interactive controls;
 - avoid unnecessary dependencies;
-- have been inspected in a running application.
+- have been inspected in a running application;
+- have relevant keyboard/safe-area behavior verified.
 
 For critical flows, add deterministic E2E coverage.
 
