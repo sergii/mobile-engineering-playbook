@@ -1,32 +1,37 @@
 # Mobile project instructions
 
-Use the Mobile Engineering Playbook as the shared React Native / Expo engineering baseline:
+Use the Mobile Engineering Playbook as the shared React Native / Expo baseline:
 
 https://github.com/sergii/mobile-engineering-playbook
 
-When the playbook is available in the session or local workspace, read at minimum:
+## Always read
 
-1. `MOBILE_ENGINEERING_PLAYBOOK.md`
-2. `guides/decision-ladder.md`
-3. `guides/agent-failure-modes.md`
-4. `guides/platform-native-rules.md`
-5. any archetype explicitly selected for this product
-
-Then read this product repository's own README, architecture notes, domain documentation, and local agent instructions.
+- this product repository's local instructions;
+- the product/domain documentation relevant to the current task.
 
 Product-specific documented rules override generic examples in the shared playbook.
 
-Do not silently select an archetype.
+## Load shared guidance only when relevant
+
+- architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
+- adding/adopting a dependency → `guides/decision-ladder.md`
+- suspicious generated or overbuilt code → `guides/agent-failure-modes.md`
+- native config, auth routing, storage, safe areas, keyboard, `ios/` or `android/` → `guides/platform-native-rules.md`
+- finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
+- explicitly selected archetype → that archetype when relevant
+
+Do not load every shared document for every small task. Do not silently select an archetype.
 
 Default behavior:
 
 - build vertical slices;
 - prefer React Native and Expo primitives;
+- start with strict TypeScript and `StyleSheet`;
 - add dependencies only for demonstrated problems;
-- use strict TypeScript;
-- verify meaningful UI in the running mobile runtime;
-- determine CNG/native-project ownership before editing `ios/` or `android/`;
-- do not treat installed/transitive packages as automatically adopted APIs;
+- determine CNG/native-project ownership before persistent native edits;
+- do not infer API adoption from transitive dependencies;
+- keep auth identity, credential storage, route protection, profile/server data, and app state as separate concerns;
+- verify meaningful UI/native behavior in the running mobile runtime;
 - keep architecture proportional to current product complexity.
 
-Before calling a feature complete, exercise the changed flow and use the playbook's vertical-slice definition of done.
+Before calling a meaningful feature complete, exercise the changed flow and use the playbook's vertical-slice definition of done.
