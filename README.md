@@ -2,7 +2,7 @@
 
 A reusable engineering baseline for building modern mobile applications with React Native, Expo, TypeScript, and AI coding agents.
 
-Current iteration: **v0.4.3**
+Current iteration: **v0.4.4**
 
 The playbook is intentionally **principle-first and UI-library-neutral**. It favors platform primitives, vertical slices, real simulator/device verification, and adding complexity only when a concrete product problem justifies it.
 
@@ -144,7 +144,7 @@ Recommended local metadata:
 
 ```text
 Playbook repository: https://github.com/sergii/mobile-engineering-playbook
-Playbook version: v0.4.3
+Playbook version: v0.4.4
 Playbook revision: <exact commit SHA or published stable tag>
 Archetype: none
 ```

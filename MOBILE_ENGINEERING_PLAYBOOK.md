@@ -1,6 +1,6 @@
 # Mobile Engineering Playbook
 
-Version: 0.4.3
+Version: 0.4.4
 
 ## Purpose
 
