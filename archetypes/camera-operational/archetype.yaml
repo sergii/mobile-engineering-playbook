@@ -1,7 +1,7 @@
 id: camera-operational
 name: Camera-Operational
 status: experimental
-version: 0.1
+version: 0.2
 
 summary: >-
   Mobile products where the camera is a primary operational input and the user
@@ -94,6 +94,8 @@ architecture_bias:
   media_processing: medium_high
   device_verification: high
   performance_sensitivity: medium_high
+  app_lifecycle_sensitivity: high
+  duplicate_operation_risk: high
 
 platform_defaults:
   runtime:
@@ -147,6 +149,7 @@ verification_bias:
   agent_device: high_value
   maestro: use_for_critical_deterministic_flows
   physical_device: strongly_preferred_when_camera_behavior_is_material
+  app_lifecycle_interruption: high_value_when_operation_state_can_be_interrupted
 
 product_questions:
   - What exactly is being identified or captured?
@@ -157,10 +160,14 @@ product_questions:
   - Is the user likely to operate one-handed?
   - What environmental constraints affect camera reliability?
   - What feedback confirms that the physical-world action succeeded?
+  - What should happen if the app backgrounds during scanning, capture, recognition, upload, or confirmation?
+  - Must permission or camera readiness be revalidated after returning from background?
+  - Can retrying or repeating an operation mutate domain state twice, and how is that prevented or resolved?
 
 non_goals:
   - prescribe_a_warehouse_domain_model
   - mandate_ai_recognition
   - mandate_offline_architecture
   - mandate_reanimated_or_gesture_handler
+  - mandate_one_camera_resource_lifecycle_implementation
   - replace_product_specific_rules
