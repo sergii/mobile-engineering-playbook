@@ -1,6 +1,6 @@
 # Mobile Engineering Playbook
 
-Version: 0.3
+Version: 0.4
 
 ## Purpose
 
@@ -156,6 +156,32 @@ Stay inside Expo and mature React Native libraries when they solve the requireme
 When application-specific native code is justified, prefer Expo Modules API unless another native integration model has a documented advantage.
 
 Reference: https://docs.expo.dev/modules/overview/
+
+## 2.4 Continuous Native Generation and Prebuild
+
+Before editing native projects, determine who owns them.
+
+When Expo Continuous Native Generation (CNG) is the source of truth:
+
+- treat `ios/` and `android/` as generated output;
+- do not leave persistent configuration changes only in generated native files;
+- express supported native configuration through `app.json` / `app.config.ts`;
+- use library or local config plugins for reproducible native project changes;
+- use Expo Modules API for application-specific native functionality when appropriate;
+- assume `npx expo prebuild --clean` can delete manual edits inside generated native projects.
+
+Temporary native edits can be useful for debugging or discovering the required change. If the project remains CNG-owned, migrate the successful change back into reproducible configuration before treating the task as complete.
+
+If the repository explicitly maintains `ios/` and `android/` as source-controlled native projects instead of regenerating them with CNG, direct Xcode/Gradle/native-source edits are valid.
+
+Do not run Prebuild against manually owned native projects in a way that unintentionally overwrites their customizations.
+
+References:
+
+- https://docs.expo.dev/workflow/continuous-native-generation/
+- https://docs.expo.dev/config-plugins/introduction/
+
+See `guides/platform-native-rules.md`.
 
 ---
 
@@ -326,6 +352,30 @@ Once navigation becomes product behavior, move to Expo Router.
 Navigation should deliberately handle relevant behavior such as deep links, notification-driven destinations, modal flows, nested workflows, platform-correct back behavior, and restoration when the product requires it.
 
 Do not invent wrapper abstractions over Expo Router before real repetition demonstrates a need.
+
+## 7.1 Authentication and authorization
+
+For current Expo Router applications, prefer Protected Routes when the requirement is route-level authentication or authorization.
+
+Use route groups to organize authenticated and unauthenticated areas, but let route guards express access rules declaratively.
+
+Do not implement authentication routing primarily through `useEffect` + `router.replace()` when a protected-route guard expresses the rule directly.
+
+Imperative redirects remain valid for explicit transitions that are not access guards.
+
+Reference: https://docs.expo.dev/router/advanced/authentication/
+
+## 7.2 Route error boundaries
+
+Expected product states and unexpected runtime failures are different problems.
+
+Expected states such as payment decline, validation errors, empty results, denied permissions, and ordinary network failures should be modeled explicitly in product UI.
+
+Use Expo Router route or layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
+
+Prefer the smallest useful boundary: route-level when a screen can recover independently, layout/navigator-level for a shared group, and application-level for truly global failure handling.
+
+Reference: https://docs.expo.dev/router/error-handling/
 
 ---
 
@@ -591,13 +641,29 @@ Add platform behaviors that improve understanding and usability:
 haptics
 keyboard behavior
 safe areas
+edge-to-edge/system bars
 status bar behavior
 system permissions
 native sheets
 native controls
 ```
 
+Treat edge-to-edge and safe-area insets as normal mobile layout inputs.
+
+Use `react-native-safe-area-context` when the application owns an inset. Do not blindly wrap every route in a safe-area component; determine which edges are already handled by navigation/layout infrastructure and avoid double padding.
+
+A form or text-entry flow is not visually verified until it has been exercised with the keyboard open on each targeted platform. Confirm that focused fields remain visible, primary actions remain reachable, scrolling can reach obscured content, and keyboard/safe-area offsets do not stack incorrectly.
+
+Start with React Native keyboard primitives. Consider advanced keyboard infrastructure only when complex interaction or repeated keyboard bugs create demonstrated friction.
+
 Haptics should communicate meaningful events, not decorate every tap.
+
+References:
+
+- https://docs.expo.dev/versions/latest/sdk/safe-area-context/
+- https://docs.expo.dev/guides/keyboard-handling/
+
+See `guides/platform-native-rules.md`.
 
 ## Phase 4 - Product UI
 
@@ -673,7 +739,7 @@ An archetype may indicate that server state or local workflow state is likely to
 
 ---
 
-# 14. Data, Forms, Images, and Lists
+# 14. Data, Forms, Images, Lists, and Local Persistence
 
 ## 14.1 Services
 
@@ -707,6 +773,39 @@ Measure before replacing them with a specialized high-performance list implement
 
 Large data sets, complex cells, or measured frame/render problems are reasons to evaluate alternatives. A large item count alone is not a complete performance diagnosis.
 
+## 14.5 Local storage
+
+Choose persistence based on data sensitivity and shape rather than picking one storage library globally.
+
+Use this baseline:
+
+```text
+small sensitive key-value data
+→ expo-secure-store
+
+small non-sensitive key-value data
+→ AsyncStorage
+
+SQLite already adopted + key-value need
+→ consider expo-sqlite/kv-store
+
+structured/queryable persistent local data
+→ expo-sqlite when justified
+
+offline synchronization
+→ define the offline model first, then choose sync tooling
+```
+
+Do not store secrets in unencrypted AsyncStorage.
+
+Do not use SecureStore as a database or as the only source of truth for large/irreplaceable data.
+
+Do not add SQLite for a few preferences.
+
+Consider faster/synchronous key-value solutions such as MMKV only when measured access/startup needs justify the additional dependency.
+
+See the storage section in `guides/decision-ladder.md`.
+
 ---
 
 # 15. Error, Empty, Uncertain, and Recovery States
@@ -729,7 +828,13 @@ success
 
 Products with probabilistic, AI, sensor, or recognition behavior may have uncertainty states. Those domain-specific states should be described in the product or relevant archetype rather than assumed globally.
 
+Expected states belong in ordinary product UI.
+
 At an appropriate application boundary, provide a way to contain unexpected render/runtime failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling.
+
+When using Expo Router, route files and layouts can own recovery boundaries at the smallest appropriate scope.
+
+Reference: https://docs.expo.dev/router/error-handling/
 
 ---
 
@@ -814,8 +919,8 @@ run simulator/device
 inspect multiple states
 verify touch interaction
 verify text does not clip
-verify safe areas
-verify keyboard behavior
+verify safe areas and edge-to-edge behavior
+verify keyboard behavior with the keyboard open
 verify supported appearance/orientation behavior
 ```
 
@@ -857,9 +962,10 @@ Do not treat Figma-to-code as a compiler. Always inspect the running application
 
 Before implementation:
 
-- read `AGENTS.md`, this playbook, the decision ladder, project documentation, and any explicitly selected archetype;
+- read `AGENTS.md`, this playbook, the decision ladder, the platform-native rules, project documentation, and any explicitly selected archetype;
 - determine the smallest vertical slice that satisfies the task;
 - inspect existing dependencies before proposing new ones;
+- identify whether native projects are CNG-generated or explicitly owned before editing `ios/` / `android/`;
 - use current official documentation for version-sensitive Expo or React Native behavior.
 
 During implementation:
@@ -869,18 +975,23 @@ During implementation:
 - keep abstractions proportional to actual complexity;
 - run the application early;
 - keep changes scoped to the task;
-- do not turn an archetype into a package checklist.
+- do not turn an archetype into a package checklist;
+- keep CNG-owned native changes reproducible through configuration/plugins/modules;
+- prefer declarative route guards over imperative auth redirect effects;
+- choose storage based on sensitivity/data shape rather than familiarity.
 
 After implementation:
 
 - run relevant checks;
+- rebuild the correct native runtime when configuration/native dependencies changed;
 - open the application;
 - exercise the changed flow;
 - inspect the rendered UI;
 - verify important states;
+- verify relevant keyboard/safe-area/system-UI behavior;
 - only then refine visual details or introduce more abstraction.
 
-See `guides/agent-failure-modes.md` for common mistakes.
+See `guides/agent-failure-modes.md` for common mistakes and `guides/platform-native-rules.md` for native/platform rules.
 
 ---
 
@@ -972,6 +1083,7 @@ A feature slice is not complete merely because the code exists.
 At minimum:
 
 - the application boots in the correct runtime;
+- native changes follow the project's ownership model;
 - the flow can be reached;
 - the primary action works;
 - the expected result is visible;
@@ -979,7 +1091,9 @@ At minimum:
 - strict TypeScript checks pass;
 - interactive custom controls have basic accessibility;
 - unnecessary dependencies were not introduced;
-- the actual running UI has been inspected.
+- the actual running UI has been inspected;
+- relevant edge-to-edge/safe-area behavior is correct;
+- text-entry flows have been verified with the keyboard open where relevant.
 
 For critical production flows, add deterministic E2E coverage.
 
@@ -1009,7 +1123,19 @@ Creating reusable components before there is actual reuse.
 
 ## Screenshot-driven completion
 
-Polishing a static happy-state screen while loading, failure, permissions, and interaction remain broken.
+Polishing a static happy-state screen while loading, failure, permissions, keyboard, and interaction remain broken.
+
+## Generated-native patching under CNG
+
+Fixing CNG-owned native configuration only by editing generated `ios/` / `android/` files that Prebuild can replace.
+
+## Imperative auth-guard effects
+
+Scattering `router.replace()` effects through screens instead of expressing route-level access declaratively when the router supports it.
+
+## Storage by familiarity
+
+Using browser `localStorage`, a database, or a high-performance KV library without first classifying the data by sensitivity, shape, and offline requirements.
 
 ## AI-generated UI drift
 
