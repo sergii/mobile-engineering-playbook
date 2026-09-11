@@ -11,7 +11,7 @@ Load shared guidance only when relevant:
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - new/cross-cutting dependency → `guides/decision-ladder.md`
 - suspicious generated or overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth routing, storage, safe areas, keyboard, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - feature completion → `guides/vertical-slice-checklist.md`
 - explicitly selected archetype → read it only when relevant to the current task
 
@@ -25,9 +25,11 @@ Default behavior:
 - vertical slices before broad infrastructure;
 - dependencies only for demonstrated problems;
 - declarative Expo Router route protection;
+- client-side route protection is not backend authorization;
 - correct CNG/native-project ownership before native edits;
-- separate authentication, credential storage, route protection, profile data, and application state;
+- separate authentication, credential storage, route protection, server authorization, profile data, and application state;
 - real simulator/device verification for meaningful UI/native behavior;
+- lifecycle/interruption verification when the workflow depends on it;
 - deterministic tests for critical regression paths when justified.
 
 Keep product-specific domain rules here or elsewhere in the product repository. Do not duplicate the full shared playbook.
