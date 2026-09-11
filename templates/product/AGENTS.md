@@ -3,14 +3,16 @@
 Use the Mobile Engineering Playbook as the shared React Native / Expo engineering baseline.
 
 Playbook repository: https://github.com/sergii/mobile-engineering-playbook
-Playbook version: v0.4.2
-Playbook revision: 20b7e097bf9b7d8333f2c3ac780be4198fedcdb1
+Playbook version: v0.4.3
+Playbook revision: ec47e930b948fd67918bb0e812d704f1cf32362e
 
 The exact revision is the reproducible baseline. The version is the human-readable release label.
 
 Do not silently follow a newer `main` revision. Upgrade the product's adopted playbook baseline deliberately after reviewing shared-rule changes.
 
 If a local checkout of the playbook is available, prefer the checkout at the recorded revision to avoid unnecessary network retrieval.
+
+Because a commit cannot contain its own final SHA, this template may pin the release-content commit immediately before a template-only self-pin commit. The recorded revision must contain the shared rules represented by the declared version.
 
 ## Product context
 
@@ -44,7 +46,7 @@ android: <command or none>
 
 - the product-specific rules in this repository;
 - the current task requirements;
-- the shared playbook's core safety rules.
+- the shared playbook's core safety rules at the recorded `Playbook revision`.
 
 Product-specific documented rules override generic examples in the shared playbook.
 
@@ -53,9 +55,11 @@ Product-specific documented rules override generic examples in the shared playbo
 - architecture/startup/unfamiliar mobile decision → `MOBILE_ENGINEERING_PLAYBOOK.md`
 - new or cross-cutting dependency → `guides/decision-ladder.md`
 - suspicious generated/overbuilt code → `guides/agent-failure-modes.md`
-- native config, auth routing/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, lifecycle-sensitive behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
+- native config, auth routing/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, application-lifecycle/interruption behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
 - explicitly selected product archetype → that archetype's README/YAML/slices when relevant
+
+Read shared documents at the recorded `Playbook revision`; do not silently substitute the current `main` branch.
 
 Do not load every shared document for every small task.
 
@@ -67,9 +71,9 @@ Add only product-owned guidance below, for example:
 - core user workflows;
 - important entities and invariants;
 - API contracts and server-side authorization expectations;
-- session/logout/user-data semantics;
+- session/logout/account-switch/user-data semantics;
 - offline/consistency requirements;
-- lifecycle/interruption behavior;
+- application-lifecycle/interruption behavior;
 - OTA/release policy if used;
 - interaction principles;
 - supported platforms/devices;
