@@ -2,16 +2,12 @@
 
 This guide defines when to introduce common React Native / Expo tools.
 
-The default rule is simple:
-
 ```text
 Do not add a tool because it is available.
 Add it when the application has a concrete problem that the tool solves better than the existing stack.
 ```
 
-Use this document together with `MOBILE_ENGINEERING_PLAYBOOK.md`.
-
-Archetypes may indicate that a class of product is more likely to need a tool earlier, but they do not override this ladder.
+Archetypes may indicate that a class of product is more likely to encounter a problem earlier, but they never override this ladder.
 
 ---
 
@@ -19,36 +15,20 @@ Archetypes may indicate that a class of product is more likely to need a tool ea
 
 ## Default
 
-Use:
-
-```text
-React Native StyleSheet
-small token files
-local component styles
-```
-
-## Stay with StyleSheet when
-
-- the application has manageable theme needs;
-- token access through imports is understandable;
-- platform differences are limited;
-- styles remain local to components;
-- there is no meaningful runtime theme complexity.
+Use React Native `StyleSheet`, local component styles, and small token files.
 
 ## Consider a styling layer when
 
-A concrete problem appears, such as:
+A demonstrated problem appears, such as:
 
 - many runtime themes;
 - substantial phone/tablet responsive rules;
-- complicated dynamic theme propagation;
 - large-scale semantic token switching;
 - repeated media-query-like behavior;
-- difficult platform-specific style branching.
+- difficult platform-specific branching;
+- design-system scale that makes plain imports hard to maintain.
 
-At that point compare focused current options against the actual requirement.
-
-Do not migrate merely because a styling framework has cleaner syntax.
+Do not migrate merely for cleaner syntax.
 
 ---
 
@@ -56,32 +36,17 @@ Do not migrate merely because a styling framework has cleaner syntax.
 
 ## Default
 
-Use Expo Router for real application navigation.
+Use Expo Router for real application navigation. A tiny one-screen experiment may avoid it temporarily.
 
-## A tiny prototype may avoid it when
-
-- there is one screen;
-- navigation is temporary;
-- the purpose is to validate one isolated interaction or experiment.
-
-## Use Expo Router once
-
-- multiple routes exist;
-- tabs or stacks become product behavior;
-- deep links matter;
-- notification destinations matter;
-- modal navigation matters;
-- back behavior should be platform-correct.
-
-Do not build a long-lived custom router from React state.
+Use it once stacks, tabs, modals, deep links, notification destinations, or platform-correct back behavior become product behavior.
 
 ## Authentication and authorization
 
-For current Expo Router applications, prefer Protected Routes for route-level authentication and authorization.
+Prefer current Expo Router Protected Routes for route-level access rules.
 
-Use route groups to organize areas of the application, but let route guards express access rules declaratively.
+Use route groups to organize areas of the application, not as the access-control mechanism itself.
 
-Do not default to `useEffect` + `router.replace()` as the primary auth-guard mechanism when Protected Routes express the same rule directly.
+Do not default to scattered `useEffect` + `router.replace()` guards when a declarative route guard expresses the rule directly.
 
 Imperative redirects remain valid for explicit transitions that are not access guards.
 
@@ -89,92 +54,98 @@ Reference: https://docs.expo.dev/router/advanced/authentication/
 
 ## Error boundaries
 
-Expected product states such as validation failures, payment declines, offline state, and empty results belong in normal product UI.
+Expected product states such as validation errors, payment declines, offline state, empty results, or permission denial belong in normal product UI.
 
-Use Expo Router route/layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
+Use route/layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
 
 Reference: https://docs.expo.dev/router/error-handling/
 
 ---
 
-# 3. React Native Gesture Handler
+# 3. Auth and Session
 
-## Default
-
-Start with built-in interaction primitives:
+Authentication is not one concern. Keep these separate:
 
 ```text
-Pressable
-ScrollView
-FlatList
-PanResponder when genuinely simple
+identity/authentication
+credential or token storage
+route protection
+authorization rules
+user profile/server data
+application state
 ```
 
-## Add Gesture Handler when
+## No accounts yet
 
-- gestures must coordinate with scroll views;
+Do not add an auth platform, session store, or credential persistence "for later".
+
+## Product has accounts
+
+Start from the actual backend/identity contract.
+
+- if the client must hold a small sensitive credential/token, use secure platform storage such as `expo-secure-store`;
+- protect routes declaratively with Expo Router Protected Routes;
+- fetch profile/server data as server state when appropriate;
+- keep transient UI/workflow state separate from authentication state.
+
+## Consider an external auth platform when
+
+The product has concrete identity requirements that justify one, such as managed OAuth/social login, enterprise identity, passwordless flows, MFA, organization membership, or account lifecycle needs that would otherwise be expensive to own.
+
+Evaluate the provider against the real identity requirements. Do not choose Clerk, Auth0, Firebase Auth, Supabase Auth, or another provider merely because authentication exists.
+
+## Do not invent a global persisted session store by default
+
+Persist only the minimum client-side material required by the authentication model.
+
+A token in SecureStore does not imply that the entire user/session/application state should also be persisted.
+
+---
+
+# 4. React Native Gesture Handler
+
+## Default
+
+Start with `Pressable`, scrolling primitives, and simple native interactions.
+
+Consider Gesture Handler when:
+
+- gestures coordinate with scroll views;
 - multiple gestures interact;
-- swipe, pan, pinch, or long-press behavior becomes non-trivial;
-- gesture cancellation and simultaneous recognition matter;
-- custom interactions need production-grade gesture semantics.
+- swipe/pan/pinch/long-press behavior becomes non-trivial;
+- cancellation or simultaneous recognition matters;
+- custom interaction semantics need production-grade gesture handling.
 
-Do not add it just because the application has buttons or simple taps.
-
-A transitive installation does not mean application code has adopted the API.
+A transitive installation does not mean application code has adopted its API.
 
 ---
 
-# 4. Reanimated
+# 5. Reanimated
 
-## Default
+Use simple state changes and platform transitions where sufficient.
 
-Use simple built-in state changes and platform transitions where sufficient.
+Add Reanimated when:
 
-## Add Reanimated when
+- animation is continuously linked to gestures;
+- high-frequency animation needs UI-thread execution;
+- shared values materially simplify complex interaction state;
+- coordinated motion or advanced transitions are part of the product.
 
-- animation is linked continuously to a gesture;
-- high-frequency animation must remain smooth under JS load;
-- shared values simplify complex interaction state;
-- advanced transitions or coordinated motion are part of the product;
-- animation work clearly benefits from UI-thread execution.
-
-## Do not add Reanimated for
-
-- a basic pressed opacity;
-- trivial show/hide behavior;
-- simple static state changes;
-- animation the platform already handles well.
-
-Motion must communicate something meaningful.
+Do not add it for ordinary pressed opacity, simple show/hide behavior, or static state changes.
 
 ---
 
-# 5. `@expo/ui`
-
-## Default
+# 6. `@expo/ui`
 
 Use React Native controls and primitives first.
 
-## Consider `@expo/ui` when
+Consider `@expo/ui` when native SwiftUI/Compose behavior creates a real product advantage, for example native menus, pickers, sheets, settings interactions, accessibility, or platform fidelity.
 
-- native SwiftUI/Compose behavior creates a real product advantage;
-- a platform control is difficult to reproduce correctly;
-- native menus, pickers, sheets, or settings interactions are important;
-- using the native control improves accessibility or platform fidelity.
-
-## Do not use it as
-
-- a mandatory universal component library;
-- a reason to make platform behavior diverge unnecessarily;
-- a replacement for product-specific React Native components.
-
-Use selectively.
+Do not make it a mandatory application-wide component system.
 
 ---
 
-# 6. External State Management
-
-## Default
+# 7. External State Management
 
 Start with:
 
@@ -184,33 +155,25 @@ useReducer
 Context
 ```
 
-## Consider Zustand, Redux, Jotai, or another library when
+Consider Zustand, Redux, Jotai, or another state library when:
 
-- many distant components mutate the same persistent application state;
+- many distant components mutate the same long-lived application state;
 - state ownership is no longer clear;
-- Context creates excessive coupling or update churn;
+- Context creates excessive coupling/update churn;
 - state transitions deserve explicit centralized modeling;
 - debugging shared application state has become difficult.
 
-## Do not add external state because
-
-- the app has many screens;
-- a tutorial includes it;
-- the API returns data;
-- it might be needed later.
+Do not add global state because the app has many screens, an API, or future complexity.
 
 ---
 
-# 7. TanStack Query or another server-state library
-
-## Default
+# 8. Server State
 
 Use straightforward service calls for simple request/response workflows.
 
-## Add a server-state library when the product needs several of
+Consider TanStack Query or another server-state library when the product needs several of:
 
-- caching;
-- stale-time policies;
+- caching/staleness policy;
 - background refresh;
 - request deduplication;
 - retries;
@@ -219,57 +182,37 @@ Use straightforward service calls for simple request/response workflows.
 - invalidation after mutation;
 - multiple consumers of the same remote data.
 
-## Do not add it merely because
-
-- the app has a REST or GraphQL API;
-- one screen fetches data;
-- it is considered standard infrastructure.
+Do not install it merely because the app calls an API.
 
 ---
 
-# 8. Local Storage and Persistence
+# 9. Local Storage and Persistence
 
-Persistence is not one problem. Choose a storage mechanism based on sensitivity, data shape, access pattern, and offline requirements.
+Choose persistence by sensitivity, data shape, access pattern, and offline requirements.
 
-## Sensitive key-value data
+## Sensitive small key-value
 
-Examples:
+Examples: access/refresh tokens or small credential material.
 
-```text
-authentication token
-refresh token
-small credential material
-sensitive session secret
-```
-
-Prefer `expo-secure-store` when the data is small, sensitive, and belongs in encrypted platform-backed key-value storage.
+Prefer `expo-secure-store`.
 
 Do not use SecureStore as the only source of truth for large or irreplaceable application data.
 
 Reference: https://docs.expo.dev/versions/latest/sdk/securestore/
 
-## Small non-sensitive key-value data
+## Small non-sensitive key-value
 
-Examples:
+Examples: `hasSeenOnboarding`, selected theme, filters, small preferences.
 
-```text
-hasSeenOnboarding
-selectedTheme
-lastUsedFilter
-small user preference
-```
+Default to `@react-native-async-storage/async-storage` when asynchronous KV storage is sufficient.
 
-Default to `@react-native-async-storage/async-storage` when simple asynchronous persistent key-value storage is sufficient.
-
-It is unencrypted. Do not store secrets there.
+It is not secret storage.
 
 Reference: https://docs.expo.dev/versions/latest/sdk/async-storage/
 
-## When SQLite is already adopted
+## SQLite already adopted
 
-If the application already uses `expo-sqlite`, consider `expo-sqlite/kv-store` for simple key-value persistence instead of adding another storage dependency.
-
-Its API is compatible with AsyncStorage-style usage and also exposes synchronous methods.
+If `expo-sqlite` is already part of the product, consider `expo-sqlite/kv-store` instead of adding another KV dependency.
 
 Reference: https://docs.expo.dev/versions/latest/sdk/sqlite/
 
@@ -279,138 +222,83 @@ Consider `expo-sqlite` when the product needs persistent structured data, querie
 
 Do not introduce a database for a handful of preferences.
 
-## Synchronous/high-performance key-value access
+## Synchronous/high-performance KV
 
-Consider a focused solution such as MMKV only when measured startup/access latency, synchronous reads, or a demonstrated performance constraint makes the asynchronous baseline insufficient.
+Consider a focused solution such as MMKV only when measured startup/access latency, required synchronous reads, or another demonstrated performance constraint makes the asynchronous baseline insufficient.
 
-Do not choose it merely because it benchmarks faster.
+Do not choose it only because a benchmark is faster.
 
 ## Offline synchronization
 
 Do not choose WatermelonDB, PowerSync, or another sync/data framework before defining:
 
-- which data exists offline;
-- ownership/source of truth;
-- staleness policy;
+- offline data scope;
+- source of truth;
+- staleness rules;
 - queued mutations;
-- conflict resolution;
+- conflict policy;
 - retry semantics;
 - user-visible sync state.
 
-Design the offline model first, then choose the smallest persistence/sync tool that implements it.
+Design the offline model first, then choose tooling.
 
 ---
 
-# 9. Forms and Validation
-
-## Default
+# 10. Forms and Validation
 
 Use native inputs and local state for small forms.
 
-## Add a form/validation library when
+Add a form/validation library when:
 
-- many fields share repeated validation behavior;
-- nested or dynamic fields become difficult to manage;
+- many fields share validation/orchestration;
+- nested/dynamic fields are hard to manage;
 - reusable schemas are valuable;
-- error mapping and submission orchestration create repeated complexity;
+- error mapping/submission logic repeats;
 - measured form performance becomes a problem.
 
-Do not add a form framework simply because a product contains forms.
+Do not add one merely because the app contains forms.
 
 ---
 
-# 10. Storybook
-
-## Default
+# 11. Storybook
 
 Do not require Storybook for the first vertical slice.
 
-## Add Storybook when
+Add it when shared components have multiple meaningful states, isolated visual iteration becomes valuable, agents repeatedly modify common components, or a real design system is emerging.
 
-- shared components have multiple important states;
-- components are used on several screens;
-- visual iteration inside full flows is slow;
-- agents repeatedly modify common UI primitives;
-- a real design system is emerging;
-- isolated component review becomes useful.
-
-Good stories represent meaningful states such as:
-
-```text
-default
-loading
-success
-warning
-error
-disabled
-empty
-```
-
-Do not build stories for every trivial wrapper.
+Stories should represent meaningful product states, not every trivial wrapper.
 
 ---
 
-# 11. React Native Testing Library
-
-## Default
+# 12. Component Testing
 
 Do not require component tests for every component.
 
-## Add component tests when
+Use React Native Testing Library or another appropriate current tool when interaction/state behavior, accessibility behavior, or a shared component is valuable to protect without a full device flow.
 
-- interaction behavior is meaningful to protect;
-- state transitions can be verified without a device flow;
-- accessibility behavior matters;
-- a shared component is becoming regression-prone.
-
-Prefer user-observable behavior over internal implementation details.
+Prefer user-observable behavior over implementation details.
 
 ---
 
-# 12. Maestro
-
-## Default
+# 13. Maestro
 
 Manual verification is acceptable for the earliest prototype.
 
-## Add Maestro when
+Add Maestro when a user journey becomes critical, regression risk is meaningful, repeated cross-change verification is needed, or CI should protect the core flow.
 
-- a user journey becomes critical;
-- regression risk becomes meaningful;
-- the same flow must work repeatedly across changes;
-- CI should verify core application behavior.
-
-Prioritize a small number of high-value journeys.
-
-Maestro is for deterministic user journeys, not subjective visual quality.
+Prioritize a small number of high-value deterministic journeys.
 
 Reference: https://maestro.mobile.dev/
 
 ---
 
-# 13. agent-device
+# 14. agent-device
 
-## Default
+Use after runnable UI exists.
 
-Use after a runnable UI exists.
+Use agent-device for exploratory interaction, accessibility-tree inspection, screenshots, visual verification, agent-driven navigation, and finding unexpected states.
 
-## Use agent-device for
-
-- exploratory interaction;
-- visual verification;
-- checking accessibility-tree output;
-- agent-driven navigation through a flow;
-- screenshots;
-- checking whether generated UI actually behaves as intended;
-- finding unexpected states deterministic scripts do not cover.
-
-## Do not use agent-device as
-
-- a replacement for deterministic E2E tests;
-- the first step before a screen can run;
-- proof that a critical workflow is regression-safe.
-
-Recommended relationship:
+Do not use it as a replacement for deterministic E2E regression tests.
 
 ```text
 Maestro = known deterministic critical paths
@@ -421,75 +309,39 @@ Reference: https://github.com/callstack/agent-device
 
 ---
 
-# 14. Argent or deeper device tooling
-
-## Default
+# 15. Deeper Device Tooling
 
 Start with normal simulator/device debugging and agent-device.
 
-## Introduce deeper tooling when
-
-- React component-tree inspection is needed;
-- network introspection is important;
-- Hermes profiling is needed;
-- CPU/render performance requires investigation;
-- Xcode Instruments or Android Perfetto workflows become relevant;
-- black-box interaction is insufficient to diagnose a problem.
-
-Use richer tools in response to a debugging need, not as mandatory project infrastructure.
+Consider tools such as Argent when black-box interaction is insufficient and you need component-tree inspection, network introspection, Hermes profiling, CPU/render investigation, or deeper platform diagnostics.
 
 Reference: https://github.com/software-mansion/argent
 
 ---
 
-# 15. React Native Skia
+# 16. Skia and SVG
 
-## Default
+## SVG
+
+Use normal views/text/images where appropriate. Add `react-native-svg` when product-specific vector graphics, lightweight charts/dials, or scalable diagrams/icons are required.
+
+SVG is often the middle ground before a custom graphics engine.
+
+## Skia
 
 Do not install Skia for ordinary UI.
 
-## Consider Skia when
+Consider it when graphics-heavy rendering, drawing, advanced visualization/effects, or measured rendering requirements exceed normal views/SVG.
 
-- rendering is genuinely graphics-heavy;
-- Canvas-style drawing is core to the feature;
-- complex custom visualization needs high-performance rendering;
-- effects or animations are difficult or inefficient with normal views/SVG;
-- measurement shows normal primitives are insufficient.
-
-Do not use Skia to draw ordinary buttons, cards, or static icons.
-
----
-
-# 16. SVG
-
-## Default
-
-Use normal views, text, and images where appropriate.
-
-## Add `react-native-svg` when
-
-- product-specific vector graphics are needed;
-- custom charts or dials are simple enough for SVG;
-- scalable vector icons or diagrams are required.
-
-SVG is often the right middle ground before Skia.
+Do not use it to draw ordinary buttons/cards.
 
 ---
 
 # 17. Images
 
-## Default
-
 Use React Native image primitives for simple local or straightforward image needs.
 
-## Consider `expo-image` when
-
-- remote image caching matters;
-- placeholders or transitions improve UX;
-- image loading/performance becomes meaningful;
-- the product is image-heavy.
-
-Do not adopt a richer image pipeline without a product reason.
+Consider `expo-image` when remote caching, placeholders, transitions, image-heavy performance, or richer loading behavior materially helps the product.
 
 ---
 
@@ -499,56 +351,44 @@ Do not adopt a richer image pipeline without a product reason.
 
 Start with `FlatList` / `SectionList`.
 
-## Consider a specialized list implementation when
+Before replacing them, profile the actual problem: cell cost, rerenders, keys, images, layout work, state propagation, and frame behavior.
 
-- measurement shows render/frame problems;
-- cells are unusually expensive;
-- the list is central to the product and current primitives cannot meet performance requirements.
+## Consider a specialized list implementation
 
-Do not replace lists based only on a guessed item-count threshold.
+If measured list/render problems remain after correcting obvious implementation issues, evaluate a focused alternative such as **FlashList** against the actual workload.
+
+Do not migrate to FlashList or another list library because the list has an arbitrary number of rows. Item count alone is not a performance diagnosis.
 
 ---
 
 # 19. Custom Native Modules
 
-## Default
+Stay inside Expo and mature React Native libraries when they solve the requirement well.
 
-Stay inside Expo and mature React Native libraries.
+Build app-specific native code only when a required platform/hardware/vendor capability is unavailable or measured performance/latency cannot be met otherwise.
 
-## Build custom native code only when
+Document build implications, platform ownership, testing, and long-term cost.
 
-- the required platform capability is unavailable;
-- performance or latency requirements cannot be met otherwise;
-- a hardware/device integration requires native APIs;
-- a vendor SDK must be integrated;
-- a focused native implementation is clearly smaller than a workaround.
-
-Before committing to native code, document why Expo and existing packages are insufficient, supported platforms, build implications, testing strategy, and long-term ownership cost.
-
-Prefer Expo Modules API for application-specific native modules when appropriate.
+Prefer Expo Modules API for app-specific native modules when appropriate.
 
 ---
 
 # 20. CNG / Prebuild and Native Project Ownership
 
-## Default for new Expo projects
+Treat Continuous Native Generation as the normal model unless the project explicitly maintains native projects itself.
 
-Treat Continuous Native Generation as the normal ownership model unless the project explicitly chooses to maintain native projects manually.
+## CNG-owned project
 
-## If CNG owns the native projects
+- `ios/` and `android/` are generated output;
+- persistent native configuration belongs in app config/config plugins/modules;
+- `expo prebuild --clean` may delete manual edits;
+- temporary native debugging changes should be migrated back into reproducible configuration.
 
-- treat `ios/` and `android/` as generated output;
-- express persistent native configuration through app config and config plugins;
-- assume `expo prebuild --clean` can delete manual native edits;
-- migrate successful temporary native debugging changes back into reproducible configuration.
+## Explicitly owned native projects
 
-## If the repository explicitly owns native projects
+Direct Xcode/Gradle/native-source edits are valid. Do not run Prebuild in a way that unintentionally overwrites them.
 
-Direct Xcode/Gradle/native-source edits are valid.
-
-Do not run Prebuild in a way that unintentionally overwrites manual native customizations.
-
-Before editing native files, determine the ownership model first.
+Determine ownership before editing native files.
 
 References:
 
@@ -559,131 +399,67 @@ References:
 
 # 21. UI Component Libraries
 
-Examples include HeroUI Native, Gluestack, Tamagui, and similar systems.
+Do not use a UI library automatically.
 
-## Default
+Consider one when much of the application is conventional forms/settings/content UI, its accessibility/platform behavior is good enough, the product intentionally aligns with it, and the team accepts migration/dependency cost.
 
-Do not use one automatically.
-
-## Consider a UI library when
-
-- much of the application is conventional forms/settings/content UI;
-- delivery speed matters more than a strongly custom interaction language;
-- its accessibility and platform behavior are good enough;
-- the design intentionally aligns with the library;
-- the team accepts the dependency and migration cost.
-
-## Avoid when
-
-- the product is dominated by custom domain interactions;
-- the library would dictate the visual language;
-- many components would immediately need heavy overrides;
-- the application would become a wrapper around library conventions.
-
-A UI library should accelerate the product, not reshape it.
+Avoid one when domain-specific interactions dominate or heavy overrides would immediately be required.
 
 ---
 
 # 22. Figma MCP
 
-## Default
-
 Not required to begin implementation.
 
-## Use when
+Use when a maintained Figma source exists and structured components/variables/design-system context materially improve implementation accuracy.
 
-- a maintained Figma design exists;
-- structured variables/components improve implementation accuracy;
-- design-system context needs to flow into agent sessions;
-- comparing design intent with implementation is valuable.
-
-Do not treat Figma MCP as a compiler. Always inspect the running application.
+Figma is design input, not executable truth. Inspect the running application.
 
 ---
 
 # 23. Analytics and Observability
 
-## Default
+Do not install a full observability stack before there is production behavior to observe.
 
-Do not install a full analytics or observability stack before there is production behavior to observe.
+Add crash reporting when external users rely on the app and crashes need remote diagnosis.
 
-## Add crash reporting when
+Add product analytics when there are explicit product questions to answer.
 
-- external users rely on the app;
-- crashes must be diagnosable outside development.
-
-## Add product analytics when
-
-- there are explicit product questions to answer;
-- events can influence decisions.
-
-## Add performance tracing when
-
-- performance is a user-visible concern;
-- measurement is needed to locate bottlenecks.
-
-Do not collect telemetry without a purpose.
+Add performance tracing when a user-visible performance problem requires measurement.
 
 ---
 
 # 24. Offline Persistence and Sync
 
-## Default
-
 Online-only behavior is acceptable unless the product requires offline use.
 
-## Add offline persistence/sync infrastructure only after defining
+Add offline infrastructure only after defining data scope, staleness, queued mutations, conflicts, retries, and visible sync state.
 
-- which data must exist offline;
-- staleness rules;
-- queued mutations;
-- conflict policy;
-- retry behavior;
-- user-visible sync state.
-
-Do not install a database merely because mobile applications sometimes work offline.
-
-Use the Local Storage and Persistence section above to distinguish simple persistence from an actual offline architecture.
+A network error screen is not an offline architecture.
 
 ---
 
 # 25. Expo Go vs Development Build
 
-## Default
+Expo Go is acceptable for early experiments that fit its bundled native capabilities.
 
-Expo Go is acceptable for very early experiments that fit its bundled native capabilities.
+Move to a development build when native libraries outside Expo Go, config plugins, app-specific permissions/entitlements, custom native modules, vendor SDKs, or production-like native behavior matter.
 
-## Move to a development build when
-
-- a native library outside Expo Go is required;
-- config plugins matter;
-- app-specific native permissions or entitlements matter;
-- custom native modules or vendor SDKs are introduced;
-- production-like native behavior must be verified.
-
-Once native behavior depends on the development build, do not use Expo Go as proof that the feature works.
+Do not use Expo Go as proof once a feature depends on development-build native behavior.
 
 ---
 
-# 26. Safe Areas, Edge-to-Edge, and Keyboard Handling
+# 26. Safe Areas, Edge-to-Edge, and Keyboard
 
-## Default
+Treat system insets and edge-to-edge layout as normal layout inputs.
 
-Treat edge-to-edge layout and system insets as normal mobile layout inputs.
+Use `react-native-safe-area-context` when application content owns an inset. Do not blindly wrap every route or double-apply navigator-managed insets.
 
-Use `react-native-safe-area-context` when application content must account for safe areas.
+For keyboard behavior, start with React Native mechanisms such as `KeyboardAvoidingView` when sufficient.
 
-Do not blindly add `SafeAreaView` to every route. Determine which insets the navigator/layout already owns and avoid double padding.
+A text-entry flow is not verified until it has been exercised with the keyboard open on targeted platforms.
 
-## Keyboard
-
-Start with React Native keyboard APIs and `KeyboardAvoidingView` when they are sufficient.
-
-A text-entry flow is not verified until it has been exercised with the keyboard open on each targeted platform.
-
-Consider `react-native-keyboard-controller` when complex scrollable forms, chat/composer interactions, synchronized keyboard animation, or repeated keyboard bugs create demonstrated friction.
-
-Do not install advanced keyboard infrastructure preemptively.
+Consider `react-native-keyboard-controller` only when complex scrollable forms, composer/chat interactions, synchronized keyboard animation, or repeated keyboard bugs demonstrate the need.
 
 References:
 
@@ -694,24 +470,17 @@ References:
 
 # 27. EAS Build / Update / Submit
 
-## Default
-
 Do not make EAS an application-architecture requirement.
 
-## Use EAS when
+Use it when cloud builds, OTA policy, store submission automation, or Expo-integrated CI/CD materially reduce operational work.
 
-- its cloud build flow reduces operational work;
-- OTA update policy is appropriate for the product;
-- store submission automation is valuable;
-- Expo-integrated release tooling simplifies CI/CD.
-
-Local native builds and other CI systems remain valid choices.
+Local native builds and other CI systems remain valid.
 
 ---
 
 # 28. Decision Template
 
-For any significant new dependency or framework, write a short note using this structure:
+For a significant new dependency/framework, write a short note:
 
 ```markdown
 ## Decision: <tool or approach>
@@ -729,21 +498,17 @@ What are we adding or changing?
 Why is it the smallest appropriate solution?
 
 ### Costs
-What build, runtime, maintenance, migration, or learning cost does it introduce?
+What build, runtime, bundle, maintenance, migration, or learning cost does it introduce?
 
 ### Exit path
 How difficult would it be to remove or replace later?
 ```
 
-The note may live in an ADR, issue, or pull request.
-
-The purpose is clarity, not process overhead.
+The note may live in an ADR, issue, or pull request. The purpose is clarity, not bureaucracy.
 
 ---
 
 # 29. Final Rule
-
-Use this escalation sequence:
 
 ```text
 platform primitive
