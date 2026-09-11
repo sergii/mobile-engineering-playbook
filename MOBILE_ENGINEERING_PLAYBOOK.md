@@ -1,6 +1,6 @@
 # Mobile Engineering Playbook
 
-Version: 0.4.1
+Version: 0.4.2
 
 ## Purpose
 
@@ -121,8 +121,10 @@ For new projects:
 - assume New Architecture;
 - prefer libraries that explicitly support the current React Native and Expo versions;
 - do not design new code around the legacy bridge;
-- verify native dependencies against current Expo compatibility guidance;
+- verify native dependencies against current Expo compatibility guidance, including bridgeless operation where applicable;
 - prefer Expo Modules API for application-specific native modules.
+
+Avoid dependencies that require disabling the New Architecture, returning to the legacy bridge, or maintaining obsolete compatibility hacks without a documented reason.
 
 Do not pin this playbook to one SDK number. Verify current behavior in Expo documentation.
 
@@ -305,6 +307,7 @@ Can a small local abstraction solve it?
 Is there already an adopted solution for this problem?
 Is the problem present now or merely anticipated?
 What maintenance, bundle, native-build, runtime, or upgrade cost does it introduce?
+Does it support the current Expo / React Native New Architecture and runtime model?
 ```
 
 Do not add infrastructure for hypothetical future requirements.
@@ -363,19 +366,31 @@ Do not implement authentication routing primarily through `useEffect` + `router.
 
 Imperative redirects remain valid for explicit transitions that are not access guards.
 
-Reference: https://docs.expo.dev/router/advanced/authentication/
+Protected Routes are a client-side navigation/UX mechanism, not a server security boundary. Every backend/API operation that reads or mutates protected data must independently authenticate the caller and enforce authorization on the server.
+
+Model session restoration explicitly. When auth state is still unknown/restoring, do not briefly render protected UI and redirect afterward. Handle expired/revoked credentials and logout deliberately, including removing credentials and invalidating user-scoped cached/persisted data where retaining it could expose the previous user's data.
+
+References:
+
+- https://docs.expo.dev/router/advanced/authentication/
+- https://docs.expo.dev/router/advanced/protected/
 
 ## 7.2 Route error boundaries
 
-Expected product states and unexpected runtime failures are different problems.
+Expected product states and unexpected React render/lifecycle failures are different problems.
 
 Expected states such as payment decline, validation errors, empty results, denied permissions, and ordinary network failures should be modeled explicitly in product UI.
 
-Use Expo Router route or layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
+Use Expo Router route or layout Error Boundaries for unexpected React render/lifecycle failures and recovery scopes.
 
-Prefer the smallest useful boundary: route-level when a screen can recover independently, layout/navigator-level for a shared group, and application-level for truly global failure handling.
+Prefer the smallest useful boundary: route-level when a screen can recover independently, layout/navigator-level for a shared group, and application-level for truly global render failures.
 
-Reference: https://docs.expo.dev/router/error-handling/
+Do not assume an Error Boundary catches every runtime exception. Ordinary event-handler failures and most asynchronous callback/operation failures require explicit handling at the operation boundary.
+
+References:
+
+- https://docs.expo.dev/router/error-handling/
+- https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
 
 ---
 
@@ -692,6 +707,7 @@ Only after meaningful product behavior exists should the application add capabil
 - offline behavior;
 - cache policy;
 - background processing;
+- lifecycle/interruption recovery where the product requires it;
 - observability;
 - performance profiling;
 - feature flags;
@@ -700,7 +716,8 @@ Only after meaningful product behavior exists should the application add capabil
 - tablet/orientation layouts;
 - localization;
 - visual regression testing;
-- release automation.
+- release automation;
+- OTA update policy when the product adopts OTA delivery.
 
 Add each capability in response to product needs.
 
@@ -830,11 +847,14 @@ Products with probabilistic, AI, sensor, or recognition behavior may have uncert
 
 Expected states belong in ordinary product UI.
 
-At an appropriate application boundary, provide a way to contain unexpected render/runtime failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling.
+At an appropriate application boundary, provide a way to contain unexpected React render/lifecycle failures and recover or report them. Do not treat an Error Boundary as a substitute for explicit expected-state handling or explicit handling of event-handler/async-operation failures.
 
 When using Expo Router, route files and layouts can own recovery boundaries at the smallest appropriate scope.
 
-Reference: https://docs.expo.dev/router/error-handling/
+References:
+
+- https://docs.expo.dev/router/error-handling/
+- https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
 
 ---
 
@@ -924,6 +944,8 @@ verify keyboard behavior with the keyboard open
 verify supported appearance/orientation behavior
 ```
 
+For lifecycle-sensitive workflows, also verify the interruptions the product promises to support, such as cold start, background/resume, process restart, session expiration, or interrupted mutations.
+
 Use agent-device or an equivalent device-driving tool for exploratory and visual verification after a runnable UI exists.
 
 Use Maestro for known deterministic critical paths.
@@ -960,13 +982,23 @@ Do not treat Figma-to-code as a compiler. Always inspect the running application
 
 # 21. Agent Operating Rules
 
+Do not load every shared document before every implementation task. Follow the conditional context-loading policy from `AGENTS.md` and the product's local instructions.
+
 Before implementation:
 
-- read `AGENTS.md`, this playbook, the decision ladder, the platform-native rules, project documentation, and any explicitly selected archetype;
+- read the product repository's local agent instructions and task-relevant product/domain documentation;
+- load this playbook when making architecture/startup decisions or resolving an unfamiliar mobile-engineering question;
+- load `guides/decision-ladder.md` before adding or adopting a cross-cutting dependency/framework;
+- load `guides/agent-failure-modes.md` when generated code is suspiciously web-shaped, dependency-heavy, or overbuilt;
+- load `guides/platform-native-rules.md` when the task touches native configuration, auth routing/security boundaries, storage, safe areas, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior;
+- load `guides/vertical-slice-checklist.md` before calling a meaningful feature slice complete;
+- load an archetype only when it was explicitly selected and materially relates to the current task;
 - determine the smallest vertical slice that satisfies the task;
 - inspect existing dependencies before proposing new ones;
 - identify whether native projects are CNG-generated or explicitly owned before editing `ios/` / `android/`;
 - use current official documentation for version-sensitive Expo or React Native behavior.
+
+Context budget is also a resource. Load guidance because it is relevant, not merely because it exists.
 
 During implementation:
 
@@ -978,7 +1010,9 @@ During implementation:
 - do not turn an archetype into a package checklist;
 - keep CNG-owned native changes reproducible through configuration/plugins/modules;
 - prefer declarative route guards over imperative auth redirect effects;
-- choose storage based on sensitivity/data shape rather than familiarity.
+- never treat client-side route protection as server authorization;
+- choose storage based on sensitivity/data shape rather than familiarity;
+- handle event-handler/async-operation failures explicitly instead of assuming Error Boundaries catch them.
 
 After implementation:
 
@@ -989,6 +1023,8 @@ After implementation:
 - inspect the rendered UI;
 - verify important states;
 - verify relevant keyboard/safe-area/system-UI behavior;
+- verify lifecycle/interruption behavior when the product depends on it;
+- verify OTA/native compatibility when the product uses OTA delivery;
 - only then refine visual details or introduce more abstraction.
 
 See `guides/agent-failure-modes.md` for common mistakes and `guides/platform-native-rules.md` for native/platform rules.
@@ -1038,6 +1074,10 @@ Validate inbound deep links and external inputs before using them for privileged
 
 Treat WebView content and message bridges as security boundaries.
 
+Client-side navigation guards are not authorization boundaries. Protected backend operations must authenticate and authorize independently on the server.
+
+On logout or account/session change, invalidate user-scoped local/cached data where retaining it could expose another user's information.
+
 For products with meaningful security risk, use OWASP MASVS as a reference rather than expanding this playbook into a full mobile-security standard.
 
 Reference: https://mas.owasp.org/MASVS/
@@ -1055,6 +1095,30 @@ Choose a repeatable build and release path before external distribution becomes 
 EAS Build / Update / Submit are strong Expo-integrated options when they fit the project's delivery model. Local or other CI-native build paths remain valid.
 
 Do not confuse build infrastructure with application architecture.
+
+## 24.1 OTA update safety
+
+These rules apply only when the product adopts EAS Update or another OTA JavaScript update mechanism.
+
+An OTA update can replace compatible JavaScript/assets. It cannot add native code or native capabilities to an already installed binary.
+
+Treat `runtimeVersion` as the compatibility contract between an OTA update and the native binary.
+
+When native runtime changes, create a new compatible binary and ensure updates target the matching runtimeVersion.
+
+Before promoting a production OTA update:
+
+- verify it on a preview/staging build using the intended compatible runtime;
+- verify startup and any relevant local-data/session migrations;
+- know the rollback path;
+- use gradual rollout when product risk justifies it.
+
+Do not publish one OTA bundle indiscriminately to incompatible native runtimes.
+
+References:
+
+- https://docs.expo.dev/eas-update/runtime-versions/
+- https://docs.expo.dev/build/updates/
 
 ---
 
@@ -1093,7 +1157,11 @@ At minimum:
 - unnecessary dependencies were not introduced;
 - the actual running UI has been inspected;
 - relevant edge-to-edge/safe-area behavior is correct;
-- text-entry flows have been verified with the keyboard open where relevant.
+- text-entry flows have been verified with the keyboard open where relevant;
+- client route protection is not relied on as the only authorization control;
+- event-handler/async-operation failures are handled explicitly when relevant;
+- lifecycle/interruption behavior has been verified when the workflow depends on it;
+- OTA/native compatibility has been verified when the product uses OTA updates.
 
 For critical production flows, add deterministic E2E coverage.
 
@@ -1133,9 +1201,21 @@ Fixing CNG-owned native configuration only by editing generated `ios/` / `androi
 
 Scattering `router.replace()` effects through screens instead of expressing route-level access declaratively when the router supports it.
 
+## Client-side authorization illusion
+
+Treating a hidden/protected route as sufficient authorization for protected backend data or mutations.
+
+## Error-Boundary-as-universal-catch
+
+Assuming React Error Boundaries automatically catch ordinary event-handler, network-operation, or arbitrary async callback failures.
+
 ## Storage by familiarity
 
 Using browser `localStorage`, a database, or a high-performance KV library without first classifying the data by sensitivity, shape, and offline requirements.
+
+## OTA/native mismatch
+
+Publishing an OTA update to a binary whose native runtime does not satisfy the update's native assumptions.
 
 ## AI-generated UI drift
 
