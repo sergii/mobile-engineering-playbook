@@ -18,7 +18,7 @@ Project-specific documented requirements override generic examples in this playb
 - `MOBILE_ENGINEERING_PLAYBOOK.md` - when making architectural decisions, starting a project, or resolving an unfamiliar mobile-engineering question;
 - `guides/decision-ladder.md` - before adding or adopting a cross-cutting dependency or framework;
 - `guides/agent-failure-modes.md` - when generated code looks web-shaped, overbuilt, dependency-heavy, or otherwise suspicious;
-- `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing/security boundaries, storage, safe areas, edge-to-edge behavior, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior;
+- `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing/security boundaries, storage, safe areas, edge-to-edge behavior, keyboard behavior, OTA/native compatibility, or application-lifecycle/interruption behavior;
 - `guides/vertical-slice-checklist.md` - before calling a meaningful feature slice complete;
 - an archetype - only when the product or user explicitly selected it and the current task materially relates to it.
 
@@ -97,7 +97,7 @@ When one is explicitly selected:
 - In CNG-owned projects, persistent native changes belong in app config, config plugins, Expo modules, or another reproducible mechanism - not only in generated native files.
 - Prefer Expo Router Protected Routes for route-level access rules instead of scattered `useEffect` + `router.replace()` guards.
 - Never treat Protected Routes or hidden screens as server-side authorization. Protected backend operations must authenticate and authorize independently.
-- Use route/layout Error Boundaries for unexpected React render/lifecycle failures, not expected product states.
+- Use route/layout Error Boundaries for unexpected React render/component-tree failures, not expected product states.
 - Do not assume Error Boundaries catch ordinary event-handler or async-operation failures; handle those explicitly.
 - Do not blindly wrap every screen in a safe-area container. Avoid double insets.
 - Do not consider text-entry UI verified until it has been exercised with the keyboard open on targeted platforms.
@@ -143,16 +143,25 @@ Do not add an auth platform until the product actually has account/identity requ
 
 Use secure platform storage for sensitive client credentials when such credentials must exist on-device. Prefer Expo Router Protected Routes for client-side access control. Enforce protected data access independently on the server.
 
-Model restoration/expiration deliberately:
+Model restoration and session transitions deliberately:
 
 ```text
-unknown / restoring
-→ authenticated
-→ unauthenticated
-→ expired / revoked
+restoring
+├─ valid identity → authenticated
+└─ no/invalid identity → unauthenticated
+
+authenticated
+├─ refresh/rotate credentials for same identity → authenticated
+├─ expired/revoked credentials → re-authentication required
+├─ logout → unauthenticated
+└─ account switch → clear previous-user scoped state → authenticate new identity
 ```
 
-Do not flash protected UI before restoration completes. On logout or account/session change, remove credentials and invalidate user-scoped cached/persisted data where retaining it could expose the previous user's information.
+Do not flash protected UI before restoration completes.
+
+Refreshing or rotating credentials for the same authenticated identity is not logout and should not clear otherwise valid user state by default.
+
+On logout or account switch, remove credentials that should no longer remain and invalidate user-scoped cached/persisted data where retaining it could expose the previous user's information.
 
 ## UI and platform rules
 
@@ -215,7 +224,7 @@ At minimum, a meaningful vertical slice should:
 - avoid unnecessary dependencies;
 - have been exercised in the running app;
 - respect server authorization boundaries where protected data is involved;
-- survive relevant lifecycle interruptions when the product requires it;
+- survive relevant application-lifecycle interruptions when the product requires it;
 - respect OTA/native compatibility when OTA delivery is used.
 
 Use `guides/vertical-slice-checklist.md` for the fuller checklist.
