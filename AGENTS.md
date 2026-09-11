@@ -18,7 +18,7 @@ Project-specific documented requirements override generic examples in this playb
 - `MOBILE_ENGINEERING_PLAYBOOK.md` - when making architectural decisions, starting a project, or resolving an unfamiliar mobile-engineering question;
 - `guides/decision-ladder.md` - before adding or adopting a cross-cutting dependency or framework;
 - `guides/agent-failure-modes.md` - when generated code looks web-shaped, overbuilt, dependency-heavy, or otherwise suspicious;
-- `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing, storage, safe areas, edge-to-edge behavior, or keyboard behavior;
+- `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing/security boundaries, storage, safe areas, edge-to-edge behavior, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior;
 - `guides/vertical-slice-checklist.md` - before calling a meaningful feature slice complete;
 - an archetype - only when the product or user explicitly selected it and the current task materially relates to it.
 
@@ -96,9 +96,12 @@ When one is explicitly selected:
 - Before editing `ios/` or `android/`, determine whether the project uses CNG/Prebuild as source of truth or explicitly owns native projects.
 - In CNG-owned projects, persistent native changes belong in app config, config plugins, Expo modules, or another reproducible mechanism - not only in generated native files.
 - Prefer Expo Router Protected Routes for route-level access rules instead of scattered `useEffect` + `router.replace()` guards.
-- Use route/layout Error Boundaries for unexpected runtime/render failures, not expected product states.
+- Never treat Protected Routes or hidden screens as server-side authorization. Protected backend operations must authenticate and authorize independently.
+- Use route/layout Error Boundaries for unexpected React render/lifecycle failures, not expected product states.
+- Do not assume Error Boundaries catch ordinary event-handler or async-operation failures; handle those explicitly.
 - Do not blindly wrap every screen in a safe-area container. Avoid double insets.
 - Do not consider text-entry UI verified until it has been exercised with the keyboard open on targeted platforms.
+- When OTA delivery is adopted, do not publish updates across incompatible native runtimes.
 
 ## Storage baseline
 
@@ -131,13 +134,25 @@ Keep these concerns separate:
 authentication identity
 ≠ credential/token storage
 ≠ route protection
+≠ server authorization
 ≠ user profile/server data
 ≠ application state
 ```
 
 Do not add an auth platform until the product actually has account/identity requirements that justify one.
 
-Use secure platform storage for sensitive client credentials when such credentials must exist on-device. Prefer Expo Router Protected Routes for access control. Do not persist more session state than the product requires.
+Use secure platform storage for sensitive client credentials when such credentials must exist on-device. Prefer Expo Router Protected Routes for client-side access control. Enforce protected data access independently on the server.
+
+Model restoration/expiration deliberately:
+
+```text
+unknown / restoring
+→ authenticated
+→ unauthenticated
+→ expired / revoked
+```
+
+Do not flash protected UI before restoration completes. On logout or account/session change, remove credentials and invalidate user-scoped cached/persisted data where retaining it could expose the previous user's information.
 
 ## UI and platform rules
 
@@ -161,7 +176,9 @@ For meaningful changes:
 3. exercise the primary interaction;
 4. inspect the actual rendered result;
 5. verify realistic loading/error/permission/empty states;
-6. verify keyboard and safe-area behavior when relevant.
+6. verify keyboard and safe-area behavior when relevant;
+7. verify cold-start/background-resume/process-restart behavior when the workflow depends on it;
+8. verify OTA/native runtime compatibility when the product uses OTA updates.
 
 Use Maestro for deterministic critical E2E paths when justified.
 
@@ -180,6 +197,7 @@ Before adding or adopting a dependency, answer:
 5. Is there already an adopted solution in this project?
 6. Why is this dependency the smallest appropriate solution?
 7. What runtime, native-build, bundle, migration, and maintenance cost does it introduce?
+8. Does it support the current Expo / React Native New Architecture and runtime model?
 
 If the answers are weak, do not add it.
 
@@ -195,7 +213,10 @@ At minimum, a meaningful vertical slice should:
 - pass strict TypeScript and relevant checks;
 - provide basic accessibility for custom controls;
 - avoid unnecessary dependencies;
-- have been exercised in the running app.
+- have been exercised in the running app;
+- respect server authorization boundaries where protected data is involved;
+- survive relevant lifecycle interruptions when the product requires it;
+- respect OTA/native compatibility when OTA delivery is used.
 
 Use `guides/vertical-slice-checklist.md` for the fuller checklist.
 
