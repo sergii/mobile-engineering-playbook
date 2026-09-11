@@ -2,7 +2,7 @@
 
 This guide records platform rules that are easy for coding agents to get wrong in Expo / React Native projects.
 
-Load this guide when the task touches native configuration, authentication routing, storage, safe areas, keyboard behavior, OTA/native compatibility, or lifecycle-sensitive behavior. Do not load it for unrelated small tasks.
+Load this guide when the task touches native configuration, authentication routing, storage, safe areas, keyboard behavior, OTA/native compatibility, or application-lifecycle/interruption behavior. Do not load it for unrelated small tasks.
 
 ## 1. Continuous Native Generation and Prebuild
 
@@ -87,24 +87,31 @@ Every backend/API operation that reads or mutates protected data must independen
 
 Do not infer that hiding or protecting a screen makes its API operations secure.
 
-### Session lifecycle
+### Session state and restoration
 
 Model session restoration explicitly instead of collapsing it into a single boolean too early.
 
-A common state shape is:
+A useful state shape is:
 
 ```text
-unknown / restoring
-→ authenticated
-→ unauthenticated
-→ expired / revoked
+restoring
+├─ valid identity → authenticated
+└─ no/invalid identity → unauthenticated
+
+authenticated
+├─ refresh/rotate credentials for same identity → authenticated
+├─ expired/revoked credentials → re-authentication required
+├─ logout → unauthenticated
+└─ account switch → clear previous-user scoped state → authenticate new identity
 ```
 
 While session restoration is still unknown/loading, do not briefly render protected product UI and redirect afterward.
 
-When credentials are expired or revoked, transition deliberately to the unauthenticated state and handle any pending user action according to product requirements.
+Refreshing or rotating credentials for the same authenticated identity is not logout and should not clear otherwise valid user state by default.
 
-On logout:
+When credentials are expired or revoked, transition deliberately toward re-authentication and handle any pending user action according to product requirements.
+
+On logout or account switch:
 
 - remove credentials that should no longer remain on the device;
 - clear or invalidate user-scoped cached/persisted data where retaining it could expose the previous user's data;
@@ -120,7 +127,7 @@ References:
 
 ## 3. Route error boundaries
 
-Expected product states and unexpected React render/lifecycle failures are different problems.
+Expected product states and unexpected React render/component-tree failures are different problems.
 
 Examples of expected states:
 
@@ -134,7 +141,7 @@ validation error
 
 Model these explicitly in product UI.
 
-Use Expo Router route or layout Error Boundaries for unexpected React render/lifecycle errors where the recovery scope makes sense.
+Use Expo Router route or layout Error Boundaries for unexpected React render/component-tree errors where the recovery scope makes sense.
 
 A route can export:
 
@@ -157,7 +164,7 @@ Error Boundaries are not universal runtime exception handlers. In particular, or
 For example:
 
 ```text
-render/lifecycle failure
+React render/component-tree failure
 → Error Boundary
 
 event handler / async operation / network mutation failure
@@ -233,6 +240,10 @@ native runtime changed
 → ensure OTA updates target the matching runtimeVersion
 ```
 
+Follow current Expo guidance for runtimeVersion policy instead of freezing a policy choice into the playbook. As of this revision, Expo recommends the `appVersion` policy for its common deployment workflow.
+
+The `fingerprint` policy can make incompatible updates less likely by changing the runtimeVersion when native-impacting inputs change, but current Expo guidance describes it as experimental/not yet widely recommended. Consider it deliberately when that automation materially benefits the project; do not treat it as the universal default.
+
 Before promoting an OTA update to production:
 
 - verify it on a preview/staging build that uses the same compatible runtime;
@@ -246,6 +257,7 @@ Do not treat OTA as a substitute for App Store / Play Store builds when native c
 
 References:
 
+- https://docs.expo.dev/eas-update/deployment/
 - https://docs.expo.dev/eas-update/runtime-versions/
 - https://docs.expo.dev/build/updates/
 
@@ -273,7 +285,7 @@ For retryable mutations, define idempotency/deduplication behavior where duplica
 
 For drafts, uploads, queues, and other resumable workflows, define whether the product should restore, restart, discard, or ask the user after interruption.
 
-Use `AppState` or another appropriate platform mechanism only when actual lifecycle-aware behavior is required; do not add lifecycle infrastructure preemptively.
+Use `AppState` or another appropriate platform mechanism only when actual application-lifecycle-aware behavior is required; do not add lifecycle infrastructure preemptively.
 
 Reference: https://reactnative.dev/docs/appstate
 
