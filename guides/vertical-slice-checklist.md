@@ -21,7 +21,7 @@ Use this checklist for a meaningful feature slice. Not every item applies to eve
 
 - [ ] The user can reach the flow through intended navigation.
 - [ ] Back/cancel behavior is correct where relevant.
-- [ ] Deep-link or notification entry is verified when the feature depends on it.
+- [ ] Deep-link or notification entry is verified when the feature depends on it. For custom URI schemes, a quick simulator/device check can use the project's real URL with `npx uri-scheme open <url> --ios` or `--android`.
 - [ ] Route-level auth/authorization uses declarative route protection when appropriate.
 - [ ] Expected product failures are modeled explicitly rather than being delegated to Error Boundaries.
 - [ ] Unexpected route/runtime failures have an appropriate recovery boundary where justified.
