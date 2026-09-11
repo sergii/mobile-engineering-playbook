@@ -52,15 +52,25 @@ Do not default to scattered `useEffect` + `router.replace()` guards when a decla
 
 Imperative redirects remain valid for explicit transitions that are not access guards.
 
-Reference: https://docs.expo.dev/router/advanced/authentication/
+Protected Routes are a client-side navigation/UX mechanism. They are not a server authorization boundary. Protected backend/API operations must independently authenticate the caller and enforce authorization.
+
+References:
+
+- https://docs.expo.dev/router/advanced/authentication/
+- https://docs.expo.dev/router/advanced/protected/
 
 ## Error boundaries
 
 Expected product states such as validation errors, payment declines, offline state, empty results, or permission denial belong in normal product UI.
 
-Use route/layout Error Boundaries for unexpected render/runtime failures and recovery scopes.
+Use route/layout Error Boundaries for unexpected React render/component-tree failures and recovery scopes.
 
-Reference: https://docs.expo.dev/router/error-handling/
+Do not assume an Error Boundary catches ordinary event-handler failures or asynchronous operation/network errors. Handle those explicitly at the operation boundary.
+
+References:
+
+- https://docs.expo.dev/router/error-handling/
+- https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary
 
 ---
 
@@ -72,7 +82,7 @@ Authentication is not one concern. Keep these separate:
 identity/authentication
 credential or token storage
 route protection
-authorization rules
+server authorization
 user profile/server data
 application state
 ```
@@ -86,9 +96,34 @@ Do not add an auth platform, session store, or credential persistence "for later
 Start from the actual backend/identity contract.
 
 - if the client must hold a small sensitive credential/token, use secure platform storage such as `expo-secure-store`;
-- protect routes declaratively with Expo Router Protected Routes;
+- protect client routes declaratively with Expo Router Protected Routes;
+- authenticate and authorize protected API operations independently on the server;
 - fetch profile/server data as server state when appropriate;
 - keep transient UI/workflow state separate from authentication state.
+
+## Model session restoration explicitly
+
+Do not collapse session state into one boolean before restoration completes.
+
+A useful shape is:
+
+```text
+restoring
+├─ valid identity → authenticated
+└─ no/invalid identity → unauthenticated
+
+authenticated
+├─ refresh/rotate credentials for same identity → authenticated
+├─ expired/revoked credentials → re-authentication required
+├─ logout → unauthenticated
+└─ account switch → clear previous-user scoped state → authenticate new identity
+```
+
+Do not briefly render protected UI while the session is still restoring.
+
+Refreshing or rotating credentials for the same authenticated identity is not logout and should not clear otherwise valid user state by default.
+
+On logout or account switch, remove credentials that should no longer remain and clear/invalidate user-scoped cached or persisted data where retaining it could expose the previous user's information.
 
 ## Consider an external auth platform when
 
@@ -477,6 +512,22 @@ Do not make EAS an application-architecture requirement.
 Use it when cloud builds, OTA policy, store submission automation, or Expo-integrated CI/CD materially reduce operational work.
 
 Local native builds and other CI systems remain valid.
+
+If the product adopts EAS Update:
+
+- treat `runtimeVersion` as the native compatibility contract for OTA updates;
+- use the current Expo-recommended runtimeVersion policy unless the project has a documented reason to choose another;
+- currently, Expo recommends the `appVersion` policy for the common deployment flow;
+- a native-runtime change requires a compatible new binary/runtimeVersion before shipping JavaScript that depends on it;
+- verify production updates on a staging/preview build with the same compatible runtime;
+- know the rollback path and consider gradual rollout for meaningful risk.
+
+The `fingerprint` runtimeVersion policy can reduce manual compatibility mistakes by changing when native-impacting inputs change, but current Expo guidance describes it as experimental/not yet widely recommended. Evaluate it deliberately rather than making it the universal default.
+
+References:
+
+- https://docs.expo.dev/eas-update/deployment/
+- https://docs.expo.dev/eas-update/runtime-versions/
 
 ---
 
