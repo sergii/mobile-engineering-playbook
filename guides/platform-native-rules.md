@@ -310,3 +310,179 @@ inspect platform behavior
 ```
 
 When a config plugin, native dependency, entitlement, permission, native module, or runtimeVersion-relevant native change occurs, rebuild the appropriate development/preview/production-like client before declaring the behavior verified.
+
+---
+
+## 9. Troubleshooting local physical-device runs
+
+Treat a local physical-device run as a stack of independent layers:
+
+```text
+device discovery
+    ↓
+native toolchain
+    ↓
+native build
+    ↓
+signing / trust
+    ↓
+install / launch
+    ↓
+JavaScript delivery
+    ↓
+feature verification
+```
+
+Success at one layer does not prove the next layer works.
+
+### Diagnose the failing layer first
+
+Use this order before changing application code:
+
+```text
+Can the host see the device?
+↓
+Can the native project build?
+↓
+Is the app correctly signed and trusted?
+↓
+Can it install?
+↓
+Can the OS launch it?
+↓
+Can the development binary reach Metro?
+↓
+Does the actual feature work?
+```
+
+Do not debug camera code because Metro is unreachable, and do not debug Metro because signing failed.
+
+### Device discovery
+
+For Apple devices, prefer structured CoreDevice / `devicectl` data when available.
+
+For automation, use stable hardware identifiers such as the device UDID rather than relying on display names.
+
+Do not use loose substring checks for device state. For example, `unavailable` contains `available`.
+
+For Android, distinguish physical devices from emulators explicitly when checking `adb` output.
+
+### Native transport is not JavaScript transport
+
+A device can be connected well enough for native operations such as:
+
+- Xcode build targeting;
+- code signing;
+- installation;
+- application launch;
+
+while still being unable to load the JavaScript development bundle.
+
+Do not assume:
+
+```text
+USB / CoreDevice / adb connection
+=
+Metro connectivity
+```
+
+For a development build, verify how the device reaches Metro: same LAN, tunnel, explicit forwarding, or another supported transport.
+
+### Metro is part of the development runtime
+
+Metro is the React Native JavaScript bundler/development server. It is not a test runner.
+
+Typical development flow:
+
+```text
+TypeScript / JavaScript / assets
+        ↓
+      Metro
+        ↓
+development native binary
+        ↓
+physical device
+```
+
+A debug/development binary can build, sign, install, and launch successfully while still showing a splash screen or an error such as `No script URL provided` if Metro is stopped or unreachable.
+
+Production-like binaries should not depend on a developer's Metro server; their JavaScript bundle is packaged according to the chosen release workflow.
+
+### Signing, trust, and Developer Mode
+
+A successful compile does not prove the OS will launch the installed app.
+
+When iOS reports an invalid code signature, inadequate entitlements, or that a development profile has not been explicitly trusted, check the signing identity, provisioning profile, Developer Mode, and developer trust on the device before changing application code.
+
+### CNG hygiene during local native debugging
+
+For CNG-owned projects:
+
+- run Prebuild from a clean worktree when practical;
+- inspect `git status` / `git diff` after Prebuild;
+- do not accidentally commit generated native output;
+- do not keep incidental changes to project scripts/configuration unless they are intentional;
+- keep `app.json` / `app.config.ts` and config plugins as the durable source of truth.
+
+Prebuild can modify files outside `ios/` or `android/`; review those changes instead of assuming they are desired.
+
+### Host native-toolchain drift
+
+Local native development also depends on host tooling such as:
+
+```text
+Xcode / platform SDK
+signing identity
+provisioning / device trust
+Ruby / CocoaPods
+JDK / Gradle
+platform command-line tools
+```
+
+Do not assume the globally newest installed tool or gem is compatible with the project.
+
+When host-tool drift causes a real reproducibility problem, prefer a scoped project-owned version requirement, compatibility check, or wrapper over undocumented machine state.
+
+Avoid mutating the entire developer environment merely to make one project build when a local reproducible solution is available.
+
+### Symptom-oriented checks
+
+Common symptoms map to different layers:
+
+```text
+"No device UDID or name matching ..."
+→ verify device discovery and target by stable identifier
+
+"invalid code signature" / "profile has not been explicitly trusted"
+→ verify signing, Developer Mode, and device trust
+
+CocoaPods/Ruby gem activation or keyword errors
+→ inspect host-tool dependency compatibility before changing app code
+
+"No script URL provided"
+→ native binary launched, but JavaScript delivery is unavailable
+
+app remains on development splash
+→ verify Metro is running and reachable before debugging the screen itself
+```
+
+### Physical-device verification for native configuration
+
+When product-specific native configuration matters, verify it in a development or production-like build rather than only Expo Go.
+
+Examples include:
+
+- permission descriptions;
+- config-plugin output;
+- entitlements;
+- application identifiers;
+- native modules;
+- hardware-dependent behavior.
+
+For permissions, verify both the configured native permission text and the actual runtime behavior on a physical device.
+
+References:
+
+- https://docs.expo.dev/workflow/continuous-native-generation/
+- https://docs.expo.dev/more/expo-cli/
+- https://reactnative.dev/docs/environment-setup
