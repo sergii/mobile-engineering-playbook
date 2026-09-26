@@ -17,8 +17,8 @@ toolchain:
     rationale: latest LTS observed on snapshot date; supported by Expo SDK 57
   package_manager:
     name: npm
-    version: lock_with_generated_project
-    rationale: default low-friction bootstrap; exact version is recorded by the executable project
+    version: 11.19.0
+    rationale: exact npm version shipped with the selected Node 24.21.0 toolchain
   scaffolder:
     package: create-expo
     version: 5.0.2
@@ -58,6 +58,9 @@ language_and_tooling:
   typescript:
     template_range_observed: "~6.0.3"
     policy: keep template-compatible stable TypeScript; do not adopt TypeScript 7 beta
+  expo_doctor:
+    version: 1.20.4
+    invocation_policy: pin exact version in CI and proof runs
   eas_cli:
     version: 24.8.0
     invocation_policy: prefer pinned npx invocation in automation
@@ -81,7 +84,10 @@ testing:
     install_policy: "npx expo install jest-expo jest @types/jest --dev"
   component:
     framework: "@testing-library/react-native"
-    install_policy: "npx expo install @testing-library/react-native --dev"
+    observed_version: "14.0.1"
+    renderer: "test-renderer@1.2.0"
+    renderer_rationale: "React 19.2 requires the Test Renderer 1.2 compatibility line"
+    install_policy: "install RNTL and pin the matching Test Renderer line for the selected React minor"
   e2e:
     framework: maestro
     note: EAS Workflows supports Maestro jobs; workflow integration is proven later
@@ -106,20 +112,20 @@ bootstrap:
   command: "npx create-expo@5.0.2 <app-name> --template expo-template-default@57.0.27"
   required_post_steps:
     - "npx expo install --check"
-    - "npx expo-doctor@latest"
+    - "npx --yes expo-doctor@1.20.4"
     - "record generated package.json and lockfile"
     - "do not upgrade core packages independently"
   optional_install_rule: "Install Expo/native packages with npx expo install, not a guessed npm version."
 
 verification:
   authoritative_sources_reviewed: true
-  generated_project: false
-  lockfile_captured: false
-  expo_install_check: false
-  expo_doctor: false
-  typecheck: false
-  lint: false
-  unit_tests: false
+  generated_project: true
+  lockfile_captured: true
+  expo_install_check: true
+  expo_doctor: true
+  typecheck: true
+  lint: true
+  unit_tests: true
   ios_simulator: false
   android_emulator: false
   ios_real_device: false
@@ -128,6 +134,18 @@ verification:
   internal_distribution_android: false
   upgrade_path: false
   ota_compatibility_and_rollback: false
+
+verification_evidence:
+  executable_repository: "https://github.com/sergii/react-native-production-starter"
+  scaffold_commit: "89b6f2e40dd6805cc18b537be5e8703c9a722233"
+  phase1_merge_commit: "b238f01b1c52171867efc26a8c44f1d496f8d42b"
+  dependency_hardening_commit: "18cbbb8f748d4f810b1599a84e5456cae5f8a95e"
+  green_fast_gate:
+    pull_request: 1
+    head_sha: "2b06c67065c5af8d57067595c82a8cc0af5ec0ae"
+    workflow_run_id: 36251607394
+    job_id: 108430559125
+  note: "Snapshot remains candidate because simulator/emulator, real-device, distribution, upgrade, and OTA proof are still pending."
 
 sources:
   - "https://docs.expo.dev/versions/latest/"
