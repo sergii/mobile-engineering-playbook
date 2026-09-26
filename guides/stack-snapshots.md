@@ -105,6 +105,25 @@ Agents should receive a small project-local instruction that points to:
 
 Do not paste the entire playbook into every agent prompt. The snapshot answers "which versions and compatibility assumptions?" while the playbook answers "how should we engineer this app?"
 
+## Prior art and why we still keep snapshots
+
+This pattern has strong precedents:
+
+- Expo's current scaffolder generates project-level agent context, and Expo provides Skills plus an MCP server for live SDK-aware guidance.
+- Ignite is a long-running opinionated React Native boilerplate with generators and a preselected stack.
+- Platform-engineering systems such as Backstage Software Templates formalize the broader "golden path" idea: a reviewed template plus controlled inputs and repeatable creation steps.
+
+We should reuse those ideas rather than invent a giant custom prompt.
+
+Our additional layer is intentionally small: an immutable dated compatibility snapshot plus a proof matrix. That answers questions those systems do not necessarily answer for our portfolio: exactly which stack did we choose on a given date, why did we reject newer prereleases, and what evidence proved this particular combination?
+
+References:
+
+- https://docs.expo.dev/agents/
+- https://docs.expo.dev/skills/
+- https://docs.infinite.red/ignite-cli/
+- https://backstage.io/docs/features/software-templates/
+
 ## Relationship to Expo's agent tooling
 
 Expo now scaffolds new projects with agent context files and provides official Expo Skills and an Expo MCP server. That is complementary to this approach.
