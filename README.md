@@ -2,7 +2,7 @@
 
 A reusable engineering baseline for building modern mobile applications with React Native, Expo, TypeScript, and AI coding agents.
 
-Current iteration: **v0.4.4**
+Current iteration: **v0.5.0**
 
 The playbook is intentionally **principle-first and UI-library-neutral**. It favors platform primitives, vertical slices, real simulator/device verification, and adding complexity only when a concrete product problem justifies it.
 
@@ -45,6 +45,8 @@ Project-specific documented requirements always override an archetype, and arche
 
 ## Documents
 
+- [`EXECUTIVE_SUMMARY.md`](./EXECUTIVE_SUMMARY.md) - concise purpose, architecture, baseline stack, testing model, and ten-step delivery path for the production starter.
+- [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md) - live ten-step execution plan and status tracker.
 - [`MOBILE_ENGINEERING_PLAYBOOK.md`](./MOBILE_ENGINEERING_PLAYBOOK.md) - canonical engineering principles and defaults.
 - [`AGENTS.md`](./AGENTS.md) - compact operating contract and conditional context-loading rules for coding agents.
 - [`guides/decision-ladder.md`](./guides/decision-ladder.md) - when to introduce common tools and abstractions, including auth/session, storage, lists, native boundaries, and EAS/OTA decisions.
@@ -52,6 +54,7 @@ Project-specific documented requirements always override an archetype, and arche
 - [`guides/platform-native-rules.md`](./guides/platform-native-rules.md) - CNG/Prebuild ownership, auth/security boundaries, Error Boundaries, safe areas, keyboard behavior, OTA/native compatibility, and application-lifecycle rules.
 - [`guides/vertical-slice-checklist.md`](./guides/vertical-slice-checklist.md) - compact Definition of Done for a vertical slice, including application-lifecycle and OTA checks when relevant.
 - [`guides/production-starter.md`](./guides/production-starter.md) - documentation-first Day-0 / Day-1 production starter specification, including release, upgrade, OTA, auth, persistence, observability, monetization seams, compliance, and real-device verification.
+- [`guides/testing-and-agent-verification.md`](./guides/testing-and-agent-verification.md) - deterministic testing, Maestro, agent-device, native-debugging escape hatches, evidence rules, and Ignite comparison policy.
 - [`guides/stack-snapshots.md`](./guides/stack-snapshots.md) - dated compatibility snapshots, verification/promotion rules, refresh policy, and agent consumption model.
 - [`snapshots/expo57-2026-09-26.yaml`](./snapshots/expo57-2026-09-26.yaml) - current candidate stable-stack snapshot for the executable starter.
 - [`templates/agent/bootstrap-production-starter.md`](./templates/agent/bootstrap-production-starter.md) - compact agent contract for generating the starter from an exact snapshot.
@@ -148,7 +151,7 @@ Recommended local metadata:
 
 ```text
 Playbook repository: https://github.com/sergii/mobile-engineering-playbook
-Playbook version: v0.4.4
+Playbook version: v0.5.0
 Playbook revision: <exact commit SHA or published stable tag>
 Archetype: none
 ```
