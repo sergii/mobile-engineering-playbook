@@ -51,6 +51,7 @@ Project-specific documented requirements always override an archetype, and arche
 - [`guides/agent-failure-modes.md`](./guides/agent-failure-modes.md) - common AI coding mistakes in React Native / Expo projects, including production-safety mistakes.
 - [`guides/platform-native-rules.md`](./guides/platform-native-rules.md) - CNG/Prebuild ownership, auth/security boundaries, Error Boundaries, safe areas, keyboard behavior, OTA/native compatibility, and application-lifecycle rules.
 - [`guides/vertical-slice-checklist.md`](./guides/vertical-slice-checklist.md) - compact Definition of Done for a vertical slice, including application-lifecycle and OTA checks when relevant.
+- [`guides/production-starter.md`](./guides/production-starter.md) - documentation-first Day-0 / Day-1 production starter specification, including release, upgrade, OTA, auth, persistence, observability, monetization seams, compliance, and real-device verification.
 - [`archetypes/`](./archetypes/) - optional product-class context and examples.
 - [`templates/product/AGENTS.md`](./templates/product/AGENTS.md) - minimal product-repository agent contract.
 - [`integrations/`](./integrations/) - thin adapters for Codex, Claude Code, Cursor, GitHub Copilot, and tools that consume root `AGENTS.md`.
