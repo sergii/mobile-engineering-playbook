@@ -59,6 +59,7 @@ Keep developer/global agent configuration, the repository engineering contract, 
 - suspicious generated/overbuilt code → `guides/agent-failure-modes.md`
 - native config, auth routing/security boundaries, storage, safe areas, keyboard, OTA/native compatibility, application-lifecycle/interruption behavior, `ios/` or `android/` → `guides/platform-native-rules.md`
 - finishing a meaningful feature slice → `guides/vertical-slice-checklist.md`
+- bootstrapping a new production app or reviewing Day-0/Day-1 readiness → `guides/production-starter.md`
 - explicitly selected product archetype → that archetype's README/YAML/slices when relevant
 
 Read shared documents at the recorded `Playbook revision`; do not silently substitute the current `main` branch.
