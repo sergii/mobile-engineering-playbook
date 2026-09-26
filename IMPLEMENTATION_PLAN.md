@@ -25,13 +25,11 @@ Exit condition:
 
 ## 2. Create separate executable starter repository
 
-Status: **BLOCKED**
+Status: **DONE**
 
 Target repository:
 
 `sergii/react-native-production-starter`
-
-Current blocker: the connected GitHub action set can modify existing repositories but does not expose repository creation. Once the empty repository exists, implementation can continue without changing the plan.
 
 The repository owns executable code, generated lockfile, CI, EAS configuration, tests, proof artifacts, and release evidence.
 
@@ -43,7 +41,7 @@ Exit condition:
 
 ## 3. Implement Phase 1 minimal runnable starter
 
-Status: **PENDING**
+Status: **IN PROGRESS**
 
 Scope:
 
