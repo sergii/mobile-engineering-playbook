@@ -21,6 +21,7 @@ Project-specific documented requirements override generic examples in this playb
 - `guides/platform-native-rules.md` - when touching native configuration, `ios/` / `android/`, auth routing/security boundaries, storage, safe areas, edge-to-edge behavior, keyboard behavior, OTA/native compatibility, or application-lifecycle/interruption behavior;
 - `guides/vertical-slice-checklist.md` - before calling a meaningful feature slice complete;
 - `guides/production-starter.md` - when bootstrapping a new production mobile app, defining Day-0/Day-1 foundations, or reviewing release/upgrade/operational readiness;
+- `guides/stack-snapshots.md` and the referenced `snapshots/*.yaml` - when selecting, refreshing, or implementing an executable stack baseline; never replace a snapshot with independently chosen latest package versions;
 - an archetype - only when the product or user explicitly selected it and the current task materially relates to it.
 
 Do **not** silently choose an archetype because a project merely resembles one.
