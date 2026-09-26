@@ -4,6 +4,16 @@ Status: **documentation-first / implementation planned**
 
 This document defines the production baseline for a future reusable React Native / Expo starter. It is intentionally a specification first. The executable starter should be built later from this contract rather than letting a template accidentally become the source of truth.
 
+## Executable-version rule
+
+The executable starter must be created from a dated stack snapshot, not from an instruction such as "use latest".
+
+- snapshot policy: [Stack Snapshots](./stack-snapshots.md)
+- current candidate: [expo57-2026-09-26](../snapshots/expo57-2026-09-26.yaml)
+- agent bootstrap contract: [bootstrap-production-starter](../templates/agent/bootstrap-production-starter.md)
+
+A snapshot assembled from upstream compatibility documentation is a candidate. It becomes verified only after the generated project, compatibility checks, simulator/device runs, tests, and required distribution proofs have actually passed.
+
 The goal is not to implement every possible feature before the first screen. The goal is:
 
 > No predictable production concern should require an architectural reset six months later.
@@ -481,9 +491,19 @@ Do not fabricate unused systems. Document:
 
 # Planned implementation phases
 
-## Phase 0 - specification
+## Phase 0 - specification and compatibility snapshot
 
-This document is the source of truth. No executable starter is claimed to exist yet.
+This document defines the production requirements. The selected stack snapshot defines the dated compatibility baseline for implementation.
+
+Current state:
+
+- production-starter specification: documented;
+- stack-snapshot mechanism: documented;
+- 2026-09-26 Expo SDK 57 snapshot: candidate;
+- executable starter: not yet created;
+- runtime/device/distribution proof: pending.
+
+No executable starter is claimed to exist yet, and the candidate snapshot must not be labeled verified until its proof matrix passes.
 
 ## Phase 1 - minimal runnable starter
 
