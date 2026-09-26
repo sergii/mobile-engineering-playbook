@@ -62,6 +62,18 @@ language_and_tooling:
     version: 24.8.0
     invocation_policy: prefer pinned npx invocation in automation
 
+agent_context:
+  project_agents_md: generated-by-expo-scaffolder
+  expo_skills: recommended
+  expo_mcp: recommended-for-live-sdk-aware-docs-and-eas-context
+  rule: local snapshot controls versions; live upstream context may report conflicts but must not silently mutate the snapshot
+
+ci_and_release:
+  fast_repo_checks: github-actions
+  native_build_submit_update: eas
+  mobile_e2e: eas-workflows-maestro
+  rationale: keep cheap repository checks close to GitHub; use mobile-aware EAS tooling for native distribution and device/emulator workflows
+
 testing:
   unit:
     framework: jest
