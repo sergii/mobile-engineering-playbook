@@ -3,8 +3,8 @@
 Use the Mobile Engineering Playbook as the shared React Native / Expo engineering baseline.
 
 Playbook repository: https://github.com/sergii/mobile-engineering-playbook
-Playbook version: v0.4.4
-Playbook revision: v0.4.4
+Playbook version: v0.5.0
+Playbook revision: <v0.5.0 release-content commit>
 
 The exact revision is the reproducible baseline. The version is the human-readable release label.
 
