@@ -1,0 +1,133 @@
+schema_version: 1
+snapshot_id: expo57-2026-09-26
+as_of: 2026-09-26
+status: candidate
+
+policy:
+  channel: stable-only
+  compatibility_anchor: expo-sdk
+  independently_bump_react_or_react_native: false
+  use_expo_install_for_expo_managed_packages: true
+  immutable_after_verification: true
+
+toolchain:
+  node:
+    version: 24.21.0
+    status: lts
+    rationale: latest LTS observed on snapshot date; supported by Expo SDK 57
+  package_manager:
+    name: npm
+    version: lock_with_generated_project
+    rationale: default low-friction bootstrap; exact version is recorded by the executable project
+  scaffolder:
+    package: create-expo
+    version: 5.0.2
+  template:
+    package: expo-template-default
+    version: 57.0.27
+
+core:
+  expo_sdk: 57
+  expo:
+    observed_latest_stable: 57.0.25
+    policy: use template-resolved SDK 57 version, then validate with expo install --check
+  react_native:
+    version: 0.86.3
+    ownership: expo-sdk
+  react:
+    version: 19.2.3
+    ownership: expo-sdk
+  react_native_web:
+    version: 0.21.0
+    ownership: expo-sdk
+  minimum_node_from_expo:
+    version: 22.13.x
+
+expo_managed_packages:
+  expo_router:
+    recommended: "~57.0.23"
+  expo_updates:
+    recommended: "~57.0.23"
+  expo_dev_client:
+    recommended: "~57.0.19"
+  expo_build_properties:
+    recommended: "~57.0.22"
+    install_when_needed: true
+
+language_and_tooling:
+  typescript:
+    template_range_observed: "~6.0.3"
+    policy: keep template-compatible stable TypeScript; do not adopt TypeScript 7 beta
+  eas_cli:
+    version: 24.8.0
+    invocation_policy: prefer pinned npx invocation in automation
+
+testing:
+  unit:
+    framework: jest
+    expo_preset: jest-expo
+    install_policy: "npx expo install jest-expo jest @types/jest --dev"
+  component:
+    framework: "@testing-library/react-native"
+    install_policy: "npx expo install @testing-library/react-native --dev"
+  e2e:
+    framework: maestro
+    note: EAS Workflows supports Maestro jobs; workflow integration is proven later
+
+native:
+  ownership: cng-prebuild
+  development_runtime: development-build
+  expo_go_policy: not-proof-for-production-native-behavior
+  new_architecture: baseline
+
+known_compatibility_notes:
+  - "Expo SDK 58 is beta on the snapshot date, so it is not the production baseline."
+  - "React Native 0.87 is stable independently, but Expo SDK 57 targets React Native 0.86.x; do not bump RN independently."
+  - "React 19.3 is available independently, but Expo SDK 57 targets React 19.2.3; do not bump React independently."
+  - "Node 26 is Current, not LTS, on the snapshot date; use Node 24 LTS."
+  - "expo@57.0.9 or later fixes the Hermes V1 memory regression inherited from SDK 56."
+  - "expo@57.0.17 updates React Native to 0.86.3 and fixes a development startup-time regression."
+  - "When building SDK 57 with Xcode 27 / iOS 27 SDK, opt into UIKit scene support with expo-build-properties as required by Expo guidance."
+  - "Use development builds rather than Expo Go as proof for production-native behavior."
+
+bootstrap:
+  command: "npx create-expo@5.0.2 <app-name> --template expo-template-default@57.0.27"
+  required_post_steps:
+    - "npx expo install --check"
+    - "npx expo-doctor@latest"
+    - "record generated package.json and lockfile"
+    - "do not upgrade core packages independently"
+  optional_install_rule: "Install Expo/native packages with npx expo install, not a guessed npm version."
+
+verification:
+  authoritative_sources_reviewed: true
+  generated_project: false
+  lockfile_captured: false
+  expo_install_check: false
+  expo_doctor: false
+  typecheck: false
+  lint: false
+  unit_tests: false
+  ios_simulator: false
+  android_emulator: false
+  ios_real_device: false
+  android_low_end_real_device: false
+  internal_distribution_ios: false
+  internal_distribution_android: false
+  upgrade_path: false
+  ota_compatibility_and_rollback: false
+
+sources:
+  - "https://docs.expo.dev/versions/latest/"
+  - "https://expo.dev/changelog/sdk-57"
+  - "https://expo.dev/changelog/sdk-58-beta"
+  - "https://docs.expo.dev/more/expo-cli/"
+  - "https://docs.expo.dev/more/create-expo/"
+  - "https://docs.expo.dev/agents/"
+  - "https://docs.expo.dev/skills/"
+  - "https://nodejs.org/en/about/previous-releases"
+  - "https://reactnative.dev/releases/"
+  - "https://reactnative.dev/blog/2026/06/11/react-native-0.86"
+  - "https://docs.expo.dev/guides/using-sentry/"
+  - "https://docs.expo.dev/develop/unit-testing/"
+  - "https://docs.expo.dev/eas/workflows/examples/e2e-tests/"
